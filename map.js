@@ -18,6 +18,7 @@ var activeGroup=null;
 var isDrawing=false;
 var db=null;
 var filters=[];
+
 (async () =>{
     if(redirect())
         return
@@ -25,19 +26,22 @@ var filters=[];
     initMap();
     loadUI();
 })();
+
 async function InitData(){
     return new Promise((resolve,reject)=>{
         let openRequest = indexedDB.open("TW_API_DATA", 1);
         let loadCnt=0;
+
         function dataLodaded(){
             loadCnt++;
             if(loadCnt==3){
-                console.log('All data loaded â');
-                window.top.UI.SuccessMessage("TĂŠrkĂŠp adatok betĂśltve!");
+                console.log('All data loaded ✔');
+                window.top.UI.SuccessMessage("Térkép adatok betöltve!");
                 window.Dialog.close("launchDialog");
                 resolve();
             }
         }
+
         openRequest.onupgradeneeded = function() {
             console.log('init database');
             db = openRequest.result;
@@ -57,11 +61,13 @@ async function InitData(){
             db = openRequest.result;
             let lastUpdate= localStorage.getItem('TW_API_LAST_UPDATE');
             if(lastUpdate<new Date().getTime() || lastUpdate==null){
-                addLoadingModal();
+                await addLoadingModal();
                 await update()
             }
+
             let tVillages = db.transaction("villages");
             let rVillages = await tVillages.objectStore("villages").getAll();
+
             rVillages.onsuccess= () =>{
                 window.villages=rVillages.result
                 dataLodaded();
@@ -73,157 +79,83 @@ async function InitData(){
                 window.players=rPlayers.result
                 dataLodaded();
             }
+
             tAllies = db.transaction("allies");
             rAllies = await tAllies.objectStore("allies").getAll();
             rAllies.onsuccess= () =>{
                 window.allies=rAllies.result
                 dataLodaded();
             }
-
-            async function update(){
-                console.log('Updating...');
-                let resVillages = await getData(`https://${window.location.host}/map/village.txt`);
-                let resPlayers = await getData(`https://${window.location.host}/map/player.txt`);
-                let resAllies = await getData(`https://${window.location.host}/map/ally.txt`);
-                let villages = resVillages.trim().split('\n')        
-                const tVillages = db.transaction('villages', "readwrite");
-                villages.forEach(async (line,index) => {
-                    let cols=line.split(',');
-                        let village={
-                            id:parseInt(cols[0]), 
-                            name:decodeURIComponent(cols[1]).replaceAll('+',' '), 
-                            x:parseInt(cols[2]), 
-                            y:parseInt(cols[3]), 
-                            player:parseInt(cols[4]), 
-                            points:parseInt(cols[5]), 
-                            rank:parseInt(cols[6])
-                        }
-                        tVillages.objectStore("villages").add(village);
-                });
-                console.log('Updated villages');
-        
-                let players = resPlayers.trim().split('\n')        
-                const tPlayers = db.transaction('players', "readwrite");
-                players.forEach(async (line,index) => {
-                    let cols=line.split(',');
-                    let player={
-                        id:parseInt(cols[0]), 
-                        name:decodeURIComponent(cols[1]).replaceAll('+',' '), 
-                        ally:parseInt(cols[2]),
-                        villages:parseInt(cols[3]), 
-                        points:parseInt(cols[4]), 
-                        rank:parseInt(cols[5])
-                    }
-                    await tPlayers.objectStore("players").add(player);
-        
-                });
-                console.log('Updated players');
-        
-                let allies = resAllies.trim().split('\n')        
-                const tAllies = db.transaction('allies', "readwrite");
-                allies.forEach(async (line,index) => {
-                    let cols=line.split(',');
-                    let allies={
-                        id:parseInt(cols[0]), 
-                        name:decodeURIComponent(cols[1]).replaceAll('+',' '), 
-                        tag:decodeURIComponent(cols[2]).replaceAll('+',' '),  
-                        members:parseInt(cols[3]), 
-                        villages:parseInt(cols[4]),  
-                        points:parseInt(cols[5]), 
-                        all_points:parseInt(cols[6]), 
-                        rank:parseInt(cols[7]),
-                    }
-                    await tAllies.objectStore("allies").add(allies);
-        
-                });
-        
-                console.log('Updated allies');
-                
-                localStorage.setItem('TW_API_LAST_UPDATE',new Date(new Date().setDate(new Date().getDate() + 1)).getTime());
-                
-            }
         
         };
+
+        async function parseCSVToIndexed(data,tableName,fields){
+            let transaction = db.transaction(tableName, "readwrite");
+            let lines = data.trim().split('\n');
+            lines.forEach(async (line) => {
+                let cols=line.split(',');
+                let obj={};
+                cols.forEach((col,index)=>{
+                    let fieldValue=decodeURIComponent(col).replaceAll('+',' ')
+                    if(!isNaN(fieldValue)){
+                        fieldValue=parseInt(fieldValue);
+                    }
+                    obj[fields[index]]=fieldValue;
+                })
+                await transaction.objectStore(tableName).put(obj);
+            });  
+        }
+    
+        async function update(){
+            console.log('Updating...');
+            let resVillages = await getData(`https://${window.location.host}/map/village.txt`);
+            let resPlayers = await getData(`https://${window.location.host}/map/player.txt`);
+            let resAllies = await getData(`https://${window.location.host}/map/ally.txt`);
+            await parseCSVToIndexed(resVillages,'villages',['id','name','x','y','player','points','rank'])
+            await parseCSVToIndexed(resPlayers,'players',['id','name','ally','villages','points','rank'])
+            await parseCSVToIndexed(resAllies,'allies',['id','name','tag','members','villages','points','all_points','rank'])
+            console.log('Updated allies');
+            localStorage.setItem('TW_API_LAST_UPDATE',new Date(new Date().setDate(new Date().getDate() + 1)).getTime());
+        }
+    
+
     })
 }
-async function update(){
-    console.log('Updating...');
-    let resVillages = await getData(`https://${window.location.host}/map/village.txt`);
-    let resPlayers = await getData(`https://${window.location.host}/map/player.txt`);
-    let resAllies = await getData(`https://${window.location.host}/map/ally.txt`);
-    let villages = resVillages.trim().split('\n')
-    $('#counter-loading').find('span').text('Falvak betĂśltĂŠse...');
-    const tVillages = db.transaction('villages', "readwrite");
-    villages.forEach(async (line) => {
-        let cols=line.split(',');
-            let village={
-                id:parseInt(cols[0]), 
-                name:decodeURIComponent(cols[1]).replaceAll('+',' '), 
-                x:parseInt(cols[2]), 
-                y:parseInt(cols[3]), 
-                player:parseInt(cols[4]), 
-                points:parseInt(cols[5]), 
-                rank:parseInt(cols[6])
-            }
-            tVillages.objectStore("villages").add(village);
-    });
-    console.log('Updated villages');
-    let players = resPlayers.trim().split('\n')
-    $('#counter-loading').find('span').text('JĂĄtĂŠkosok betĂśltĂŠse...');
-    const tPlayers = db.transaction('players', "readwrite");
-    players.forEach(async (line) => {
-        let cols=line.split(',');
-        let player={
-            id:parseInt(cols[0]), 
-            name:decodeURIComponent(cols[1]).replaceAll('+',' '), 
-            ally:parseInt(cols[2]),
-            villages:parseInt(cols[3]), 
-            points:parseInt(cols[4]), 
-            rank:parseInt(cols[5])
-        }
-        await tPlayers.objectStore("players").add(player);
-    });
-    console.log('Updated players');
-    let allies = resAllies.trim().split('\n')
-    $('#counter-loading').find('span').text('KlĂĄnok betĂśltĂŠse...');
-    const tAllies = db.transaction('allies', "readwrite");
-    allies.forEach(async (line) => {
-        let cols=line.split(',');
-        let allies={
-            id:parseInt(cols[0]), 
-            name:decodeURIComponent(cols[1]).replaceAll('+',' '), 
-            tag:decodeURIComponent(cols[2]).replaceAll('+',' '),  
-            members:parseInt(cols[3]), 
-            villages:parseInt(cols[4]),  
-            points:parseInt(cols[5]), 
-            all_points:parseInt(cols[6]), 
-            rank:parseInt(cols[7]),
-        }
-        await tAllies.objectStore("allies").add(allies);
-    });
-    
-    localStorage.setItem('TW_API_LAST_UPDATE',new Date(new Date().setDate(new Date().getDate() + 1)).getTime());
-    
+
+async function updateApi(){
+    localStorage.setItem('TW_API_LAST_UPDATE',new Date().getTime());
+    await InitData();
+    $("#updated").text(`Api frissítve: ${getLastUpdate()}`);
 }
+
 function addLoadingModal(){
-    window.Dialog.show("launchDialog",
-    /*html*/`
-        <h1 style="text-align:center">TĂŠrkĂŠp adatok frissĂ­tĂŠse</h1>
-        <div id="counter-loading" style="display: flex; justify-content: center; width: 100%;">
-            <img style="height:25px" src="https://dshu.innogamescdn.com/asset/6389cdba/graphic/loading.gif"><span style="padding:5px">BetĂśltĂŠs...</span>
-        </div>
-    `);
-    $('.popup_box_container').append('<div style="position: fixed;width: 100%;height: 100%;top:0;left:0;z-index:12001"></div>');
+    return new Promise((resolve,reject)=>{
+        window.Dialog.show("launchDialog",
+            /*html*/`
+                <h1 style="text-align:center">Térkép adatok frissítése</h1>
+                <div id="counter-loading" style="display: flex; justify-content: center; width: 100%;">
+                    <img style="height:25px" src="https://dshu.innogamescdn.com/asset/6389cdba/graphic/loading.gif"><span style="padding:5px">Betöltés...</span>
+                </div>
+            `);
+        $('.popup_box_close').hide();
+        $('.popup_box_container').append('<div style="position: fixed;width: 100%;height: 100%;top:0;left:0;z-index:12001"></div>');
+
+        setTimeout(()=>{
+            resolve()
+        },500)
+    });
 }
+
 function getData(ajaxurl) { 
     return $.ajax({
       url: ajaxurl,
       type: 'GET',
     });
 };
+
 function redirect(){
     if(!window.location.href.includes('screen=map')) {
-        window.top.UI.InfoMessage("ĂtĂ­rĂĄnyĂ­tĂĄs a tĂŠrkĂŠpre!");
+        window.top.UI.InfoMessage("Átírányítás a térképre!");
         setTimeout(()=>{
             window.location.href=`game.php?village=${game_data.village.id}&screen=map`
         },1000);
@@ -232,40 +164,52 @@ function redirect(){
     backupTW=TWMap.map._handleClick;
     return false
 }
+
+function getLastUpdate(){
+    let lastUpdate =  localStorage.getItem('TW_API_LAST_UPDATE');
+    lastUpdate= new Date(parseInt(lastUpdate)-(60*60*24*1000));
+    return lastUpdate.toLocaleString('hu-HU');
+}
+
 function loadUI(){
     $("#content_value").prepend(/*html*/`
-        <div style="display:table;">
-            <div style="margin:5px 0">
+        <div style="display:table;width:100%">
+            <div style="margin:5px 0;width:100%">
                 <button class="btn" onclick="renderModal()">Csoportok</button>
-                <button id="newGroup" class="btn" onclick="newGroup()">Ăj csoport</button>
+                <button id="newGroup" class="btn" onclick="newGroup()">Új csoport</button>
+                <div style="float:right" >
+                <span id="updated" style="float:right">Api frissítve: ${getLastUpdate()}</span><br>
+                <button style="float:right;margin-top:5px;" class="btn" onclick="updateApi()">Adatok frissítése</button>
+                </div>
             </div>
-            <select style="margin:5px 0; font-size:14px; width:100px" onchange="groupChanged()" id="groupSelector" placeholder="-- VĂĄlassz csoportot--"></select>
+            <select style="margin:5px 0; font-size:14px; width:100px" onchange="groupChanged()" id="groupSelector" placeholder="-- Válassz csoportot--"></select>
             <div style="margin:5px 0;display:none;" id="addGroup">
-                <label for="color">SzĂ­n:</label>
+                <label for="color">Szín:</label>
                 <input type="color" id="color" value="#e66465" />
-                <label for="groupName">NĂŠv:</label>
+                <label for="groupName">Név:</label>
                 <input type="text" id="groupName" value="#e66465" />
-                <button class="btn" onclick="addGroup()">HozzĂĄad</button>
-                <button class="btn" onclick="cancelAdd()">MĂŠgse</button>
+                <button class="btn" onclick="addGroup()">Hozzáad</button>
+                <button class="btn" onclick="cancelAdd()">Mégse</button>
             </div>
             <div style="margin:5px 0;display:none;" id="tools">
                 <input type="checkbox" onchange="toggleDrawing()" id="draw" >
-                <label for="draw" >RajzolĂĄs</label>
+                <label for="draw" >Rajzolás</label>
                 <input type="checkbox" onchange="toggleInfo()" id="vinfo" >
                 <label for="vinfo" >FaluInfo</label>
                 <input type="radio" id="concave" name="tool">
-                <label for="concave">KonkĂĄv</label>
+                <label for="concave">Konkáv</label>
                 <input type="radio" id="circle" name="tool">
-                <label for="circle">KĂśr</label>
+                <label for="circle">Kör</label>
                 <input type="number" id="radius" value="10" min="1" max="1000" >
                 <input type="radio" id="single" name="tool">
-                <label for="circle">EgyenkĂŠnt</label>
-                <button class="btn" onclick="addToGroup()">HozzĂĄad</button>
-                <button class="btn" onclick="resetSelected()">visszaĂĄllĂ­t</button>
+                <label for="circle">Egyenként</label>
+                <button class="btn" onclick="addToGroup()">Hozzáad</button>
+                <button class="btn" onclick="resetSelected()">visszaállít</button>
             </div>
         </div>
     `);
 }
+
 function initMap(){
     $("#minimap_mover").append('<canvas id="mini_map" />');
     $("#map_mover").append('<canvas id="big_map" />');
@@ -274,10 +218,12 @@ function initMap(){
     ctxMini = canvasMini.getContext('2d');
     canvasBig = document.getElementById('big_map');
     ctxBig = canvasBig.getContext('2d');
+
     ctxBig.canvas.width =  $("#map_mover").innerWidth();
     ctxBig.canvas.height =  $("#map_mover").innerHeight();
     ctxMini.canvas.width =  $("#minimap_mover").innerWidth();
     ctxMini.canvas.height =  $("#minimap_mover").innerHeight();
+
     ctxBig.save();
     ctxMini.save();
     translating();
@@ -285,6 +231,7 @@ function initMap(){
     const observer = new MutationObserver(updatePos);
     observer.observe(document.querySelector("#map_container"), { attributes: true });
 }
+
 function newGroup(){
     $('#tools').hide();
     $('#newGroup').hide();
@@ -292,14 +239,17 @@ function newGroup(){
     $('#groupName').val('');
     $('#color').val('#e66465');
 }
+
 function addGroup(){
     if($('#groupName').val().trim()==""){
-        window.UI.ErrorMessage('A csoport nevĂŠt kĂśtelezĹ megadni!')
+        window.UI.ErrorMessage('A csoport nevét kötelező megadni!')
         return;
     }
+
     $('#newGroup').show();
     $('#addGroup').hide();
     $('#tools').show();
+
     let newGroup = {
         id:new Date().getTime(),
         name:$('#groupName').val(),
@@ -310,21 +260,25 @@ function addGroup(){
     activeGroup=newGroup;
     renderGroupSelect();
 }
+
 function cancelAdd(){
     $('#newGroup').show();
     $('#addGroup').hide();
     renderGroupSelect();
 }
+
 function renderGroupSelect(){
     let html='';
     groups.forEach((group)=>{
         html+=/*html*/`<option ${group.id==activeGroup.id? 'selected':''} value="${group.id}">${group.name} (${group.villages.length})</option>`;
     })
     $('#groupSelector').html(html);
+
     if(groups.length>0){
         $('#tools').show();
     }
 }
+
 function groupChanged(){
     if($('#groupSelector').val()==""){
         $('#tools').hide();
@@ -332,12 +286,15 @@ function groupChanged(){
     }else{
         $('#tools').show();
     }
+
     let val = parseInt($('#groupSelector').val().toString())
+
     let ind = groups.findIndex((group)=>{return group.id==val})
     
     activeGroup=groups[ind];
     renderGroupSelect();
 }
+
 document.addEventListener("keydown", (event) => {
     switch(event.key){
         case "Shift":
@@ -345,6 +302,7 @@ document.addEventListener("keydown", (event) => {
         break;
     }
 });
+
 document.addEventListener("keyup", (event) => {
     switch(event.key){
         case "Shift":
@@ -352,6 +310,7 @@ document.addEventListener("keyup", (event) => {
         break;
     }
 });
+
 function toggleDrawing(){
     if(!isDrawing){
         isDrawing=true;
@@ -363,6 +322,7 @@ function toggleDrawing(){
         $('#map_popup').css('opacity','1');
     }
 }
+
 function toggleInfo(){
     if($('#vinfo').is(':checked')){
         $('#map_popup').css('opacity','1');
@@ -370,22 +330,27 @@ function toggleInfo(){
         $('#map_popup').css('opacity','0');
     }
 }
+
 const mapAction = function (e) {
     var pos = this.coordByEvent(e);
     if(!canDraw){
         return false;
     }
+
     if($('#concave').is(':checked')){
         drawConcave(pos[0],pos[1])
     }
+
     if($('#circle').is(':checked')){
         drawCircle(pos[0],pos[1])
     }
+
     if($('#single').is(':checked')){
         drawSingle(pos[0],pos[1])
     }
     return false;
 }
+
 
 function drawCircle(x,y){
     let r= $("#radius").val();
@@ -402,6 +367,7 @@ function drawCircle(x,y){
     render();
     activeMarker = null
 }
+
 function drawSingle(x,y){
     let vil=getVillagesByCircle(0,x,y);
     if(vil.length>0){
@@ -418,6 +384,7 @@ function drawSingle(x,y){
         activeMarker = null
     }
 }
+
 function drawConcave(x,y){
     let idx = markers.findIndex((obj)=>{ return obj.id==activeMarker});
     if(idx==-1){
@@ -441,6 +408,7 @@ function drawConcave(x,y){
         render();
     }
 }
+
 function getVillagesByCircle(r,x,y){
     let villages = window.villages;
     let villagesOpt=[];
@@ -451,6 +419,7 @@ function getVillagesByCircle(r,x,y){
     })
     return villagesOpt;
 }
+
 function isInside(circle, village, r)
 {
     if ((village.x - circle.x) * (village.x - circle.x) +(village.y - circle.y) * (village.y - circle.y) <= r * r)
@@ -458,6 +427,7 @@ function isInside(circle, village, r)
     else
         return false;
 }
+
 function getVillagesByRect(points){
     let minX=999;  
     let maxX=0; 
@@ -485,6 +455,7 @@ function getVillagesByRect(points){
                 villagesOpt.push(village);
         }
     })
+
     let villagesInside =[]
   
     villagesOpt.forEach((village)=>{
@@ -492,12 +463,14 @@ function getVillagesByRect(points){
         if(rayCasting(points,{x:village.x,y:village.y})){
             ins=true;
         }
+
         for (let i = 0; i < points.length-1; i++) {
             
             if(calcIsInsideThickLineSegment(points[i],village,points[i+1],0.2)){
                 ins=true;
             }
         }
+
         if(calcIsInsideThickLineSegment(points[0],village,points[points.length-1],0.2)){
             ins=true;
         }
@@ -506,6 +479,7 @@ function getVillagesByRect(points){
             villagesInside.push(village)
         }
     })
+
     render();
     let vil="";
     villagesInside.forEach((elem)=>{
@@ -513,9 +487,9 @@ function getVillagesByRect(points){
     })
     return villagesInside
 }
+
 function rayCasting(polygon,point) {
     var x = point.x, y = point.y;
-    
     var inside = false;
     for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
         var xi = polygon[i].x, yi = polygon[i].y;
@@ -528,10 +502,12 @@ function rayCasting(polygon,point) {
     
     return inside;
 }
+
 function calcIsInsideThickLineSegment(line1, pnt,line2, lineThickness) {
     var L2 = ( ((line2.x - line1.x) * (line2.x - line1.x)) + ((line2.y - line1.y) * (line2.y - line1.y)) );
     if(L2 == 0) return false;
     var r = ( ((pnt.x - line1.x) * (line2.x - line1.x)) + ((pnt.y - line1.y) * (line2.y - line1.y)) ) / L2;
+
     //line thickness is circular
     if(r < 0) {
         //Outside line1
@@ -545,6 +521,7 @@ function calcIsInsideThickLineSegment(line1, pnt,line2, lineThickness) {
         return (Math.sqrt(( (line2.x - pnt.x) * (line2.x - pnt.x) ) + ( (line2.y - pnt.y) * (line2.y - pnt.y) )) <= lineThickness);
     }
 }
+
 function render(){
     ctxBig.canvas.width =  $("#map_mover").innerWidth();
     ctxBig.canvas.height =  $("#map_mover").innerHeight();
@@ -569,27 +546,31 @@ function render(){
         if(elem.type=="circle"){
             ctxBig.ellipse((elem.x+1)*fieldWidthBig-fieldWidthBig/2, (elem.y+1)*fieldHeightBig-fieldHeightBig/2, (fieldWidthBig/2)*elem.r, (fieldHeightBig/2)*elem.r, 0, 0, 2 * Math.PI);
             ctxBig.stroke();
+
             ctxMini.ellipse((elem.x+1)*fieldWidthMini-fieldWidthMini/2, (elem.y+1)*fieldHeightMini-fieldHeightMini/2, (fieldWidthMini/2)*elem.r, (fieldHeightMini/2)*elem.r, 0, 0, 2 * Math.PI);
             ctxMini.stroke();
+
             ctxBig.beginPath();
             ctxBig.ellipse((elem.x+1)*fieldWidthBig-fieldWidthBig/2, (elem.y+1)*fieldHeightBig-fieldHeightBig/2, (fieldWidthBig/2)*0.5, (fieldHeightBig/2)*0.5, 0, 0, 2 * Math.PI);
             ctxBig.fill();
         }
         if(elem.type=="concave" ){
+
             if(elem.points.length>0){
-                
                 ctxBig.ellipse((elem.points[0].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[0].y+1)*fieldHeightBig-fieldHeightBig/2, (fieldWidthBig/2)*0.5, (fieldHeightBig/2)*0.5, 0, 0, 2 * Math.PI);
                 ctxBig.fill();
             }
             for (let i = 0; i < elem.points.length-1; i++) {
                 ctxBig.moveTo((elem.points[i].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[i].y+1)*fieldHeightBig-fieldHeightBig/2);
                 ctxBig.lineTo((elem.points[i+1].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[i+1].y+1)*fieldHeightBig-fieldHeightBig/2);
+
                 ctxMini.moveTo((elem.points[i].x+1)*fieldWidthMini-fieldWidthMini/2, (elem.points[i].y+1)*fieldHeightMini-fieldHeightMini/2);
                 ctxMini.lineTo((elem.points[i+1].x+1)*fieldWidthMini-fieldWidthMini/2, (elem.points[i+1].y+1)*fieldHeightMini-fieldHeightMini/2);
             }
             if(elem.canClose){ 
                 ctxBig.moveTo((elem.points[elem.points.length-1].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[elem.points.length-1].y+1)*fieldHeightBig-fieldHeightBig/2);
                 ctxBig.lineTo((elem.points[0].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[0].y+1)*fieldHeightBig-fieldHeightBig/2);
+
                 ctxMini.moveTo((elem.points[elem.points.length-1].x+1)*fieldWidthMini-fieldWidthMini/2, (elem.points[elem.points.length-1].y+1)*fieldHeightMini-fieldHeightMini/2);
                 ctxMini.lineTo((elem.points[0].x+1)*fieldWidthMini-fieldWidthMini/2, (elem.points[0].y+1)*fieldHeightMini-fieldHeightMini/2);
             }
@@ -598,13 +579,13 @@ function render(){
             ctxMini.stroke();
         }
         if(typeof elem.villages!=='undefined'){
-            elem.villages.forEach((village)=>{
-                
+            elem.villages.forEach((village)=>{ 
                 ctxBig.fillStyle = elem.color+"66";
                 ctxBig.fillRect((village.x+1)*fieldWidthBig-fieldWidthBig, (village.y+1)*fieldHeightBig-fieldHeightBig, fieldWidthBig, fieldHeightBig);
+
                 ctxMini.fillStyle = elem.color;
                 ctxMini.fillRect((village.x+1)*fieldWidthMini-fieldWidthMini, (village.y+1)*fieldHeightMini-fieldHeightMini, fieldWidthMini, fieldHeightMini);
-            })
+            });
         }
    
     })
@@ -617,6 +598,7 @@ function render(){
         })
     })
 }
+
 function translating(){
     let tx = $("#map_coord_x").css('left').replace('px','');
     let ty = $("#map_coord_y").css('top').replace('px','');
@@ -625,11 +607,11 @@ function translating(){
     translate={x:26500-tx,y:26500-ty}
     translateMini={x:-stx,y:-sty}
 }
+
 function updatePos(){
     translating();
     render()
 }
-
 
 function addToGroup(){
     let activeInd=groups.findIndex((g)=>{return g.id==activeGroup.id})
@@ -641,17 +623,21 @@ function addToGroup(){
             }
         })
     })
+
     markers=[];
     render()
     renderGroupSelect();
 }
+
 function resetSelected(){
     markers=[];
     render()
 }
+
 window.toClipBoard = () => {
     navigator.clipboard.writeText(selectedVillages.trim());
 }
+
 window.renderModal = () => {
     selectedGroups=[];
     window.Dialog.show("groupsModal",
@@ -699,14 +685,17 @@ window.renderModal = () => {
             .group-row div{
                 padding: 6px;
             }
+
             .group-items .group-row:nth-of-type(even){
                 background-color: #fff5da
             }
+
             .name { grid-area: name; }
             .view { grid-area: view; }
             .color { grid-area: color; }
             .checkbox { grid-area: checkbox; }
             .group-items{overflow-y: scroll; height: calc(100% - 40px);}
+
             .village-row {  display: grid;
                 grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
                 grid-template-rows: 30px;
@@ -715,12 +704,15 @@ window.renderModal = () => {
                 grid-template-areas:
                     "village-name point owner ally type";
             }
+
             .village-row div{
                 padding: 6px;
             }
+
             .village-items .village-row:nth-of-type(even){
                 background-color: #fff5da
             }
+
 
             .village-name {grid-area: village-name; }
             .point{grid-area: point; }
@@ -730,11 +722,13 @@ window.renderModal = () => {
             .village-items{
                 overflow-y: scroll; height: calc(100% - 40px);
             }
+
             .group-header{
                 margin-right:5px;
                 background: linear-gradient(to bottom,#e2c07c 0%,#dab874 44%,#c1a264 100%);
                 font-weight:bold;
             }
+
             .village-header{
                 margin-right:5px;
                 background: linear-gradient(to bottom,#e2c07c 0%,#dab874 44%,#c1a264 100%);
@@ -783,6 +777,7 @@ window.renderModal = () => {
                 grid-area: filter-items;
                 overflow-y: scroll;
             }
+
             .filter-sub select{
                 max-width:150px;
                 font-size:14px;
@@ -804,31 +799,31 @@ window.renderModal = () => {
         </style>
         <div class="container">
             <div class="menu">
-                <button class="btn" onclick="union()">Ăsszevon</button>
+                <button class="btn" onclick="union()">Összevon</button>
                 <button class="btn" onclick="subtract()">Kivon</button>
                 <button class="btn" onclick="section()">Metszet</button>
-                <button class="btn" onclick="openFilter()">SzĹąrĂŠs</button>
-                <button class="btn" onclick="deleteSelected()">TĂśrlĂŠs</button>
-                <span>TW-mapper - v1.0 by: toldi26</span>
-                <button style="float:right;" class="btn" onclick="copyCoords()">MĂĄsolĂĄs</button>
+                <button class="btn" onclick="openFilter()">Szűrés</button>
+                <button class="btn" onclick="deleteSelected()">Törlés</button>
+                <span>TW-mapper - v1.1 by: toldi26</span>
+                <button style="float:right;" class="btn" onclick="copyCoords()">Másolás</button>
             </div>
             <div class="groups">
                 <div class="group-row group-header" >
-                    <div class="name">Csoport NĂŠv</div>
-                    <div class="color">SzĂ­n</div>
-                    <div class="checkbox">vĂĄlaszt</div>
-                    <div class="view">NĂŠzet</div>
+                    <div class="name">Csoport Név</div>
+                    <div class="color">Szín</div>
+                    <div class="checkbox">választ</div>
+                    <div class="view">Nézet</div>
                 </div>
                 <div class="group-items">
                 </div>
             </div>
             <div class="villages">
                 <div class="village-row village-header"  >
-                    <div class="village-name">Falu NĂŠv</div>
+                    <div class="village-name">Falu Név</div>
                     <div class="point">Pont</div>
                     <div class="owner">Tulajdonos</div>
-                    <div class="ally">KlĂĄn</div>
-                    <div class="type">TĂ­pus</div>
+                    <div class="ally">Klán</div>
+                    <div class="type">Típus</div>
                 </div>
                 <div class="village-items">
                     
@@ -837,11 +832,11 @@ window.renderModal = () => {
             <div class="filter-window" style="display:none;">
                 <div class="filter-menu">
                     <div class="filter-main">
-                        <button class="btn" onclick="barbMenu()">BarbĂĄr</button>
-                        <button class="btn" onclick="playerMenu()">JĂĄtĂŠkos</button>  
-                        <button class="btn" onclick="allyMenu()">KlĂĄn</button>
+                        <button class="btn" onclick="barbMenu()">Barbár</button>
+                        <button class="btn" onclick="playerMenu()">Játékos</button>  
+                        <button class="btn" onclick="allyMenu()">Klán</button>
                         <button class="btn" onclick="pointMenu()">Pont</button>
-                        <button class="btn" onclick="bonusMenu()">BĂłnusz</button>   
+                        <button class="btn" onclick="bonusMenu()">Bónusz</button>   
                     </div>
                     <div class="filter-sub">
                 
@@ -852,21 +847,22 @@ window.renderModal = () => {
                 
                 </div>
                 <div class="filter-footer">
-                <input id="copyCheck" type="checkbox"/><label style="padding:5px">MĂĄsolat</label>
+                <input id="copyCheck" type="checkbox"/><label style="padding:5px">Másolat</label>
                 <button class="btn" onclick="applyFilter()">Alkalmaz</button>
-                <button class="btn" onclick="cancelFilter()">MĂŠgse</button>   
+                <button class="btn" onclick="cancelFilter()">Mégse</button>   
                 </div>
             </div>
         </div>
     `);
     renderGroupList();
 }
+
 function renderGroupList(){
     let html='';
     groups.forEach((group)=>{
         html+=/* html */`
             <div class="group-row" id="g-${group.id}">
-                <div class="name">${group.name} (${group.villages.length})<a onclick="editGroupName(${group.id})" class="rename-icon" href="#" data-title="Ătnevez"></a></div>
+                <div class="name">${group.name} (${group.villages.length})<a onclick="editGroupName(${group.id})" class="rename-icon" href="#" data-title="Átnevez"></a></div>
                 <div class="color"><input onchange="changeColor(${group.id})" style="height:20px" type="color" value="${group.color}"></div>
                 <div class="checkbox"><input onclick="toggleSelected(${group.id})" type="checkbox" value="${group.id}"></div>
                 <div class="view"><button onclick="loadActiveGoup(${group.id})" class="btn">-></button></div>
@@ -875,28 +871,33 @@ function renderGroupList(){
     })
     $('.group-items').html(html);
 }
+
 function editGroupName(id){
     let idx = groups.findIndex((group)=>{return group.id==id});
-    $('html').find(`#g-${id}`).find('.name').html(`<input value="${groups[idx].name}" type="text"/><button onclick="saveGroupName(${groups[idx].id})" >Ătnevez</button>`)
+    $('html').find(`#g-${id}`).find('.name').html(`<input value="${groups[idx].name}" type="text"/><button onclick="saveGroupName(${groups[idx].id})" >Átnevez</button>`)
     
 }
+
 function saveGroupName(id){
     let idx = groups.findIndex((group)=>{return group.id==id});
     groups[idx].name=$('html').find(`#g-${id}`).find('.name input').val();
-    $('html').find(`#g-${id}`).find('.name').html(`${groups[idx].name} (${groups[idx].villages.length})<a onclick="editGroupName(${groups[idx].id})" class="rename-icon" href="#" data-title="Ătnevez"></a>`);
+    $('html').find(`#g-${id}`).find('.name').html(`${groups[idx].name} (${groups[idx].villages.length})<a onclick="editGroupName(${groups[idx].id})" class="rename-icon" href="#" data-title="Átnevez"></a>`);
     renderGroupSelect();
 }
+
 function changeColor(id){
     let idx = groups.findIndex((group)=>{return group.id==id});
     groups[idx].color=$('html').find(`#g-${id}`).find('.color input').val(); 
     render();
 }
+
 function loadActiveGoup(id){
     let idx= groups.findIndex((group)=>{return group.id==id})
     activeGroup=groups[idx];
     renderSelectedVillages()
     renderGroupSelect();
 }
+
 function renderSelectedVillages(){
     let html='';
     activeGroup.villages.forEach((village)=>{
@@ -925,6 +926,7 @@ function renderSelectedVillages(){
     })
     $('.village-items').html(html);
 }
+
 function toggleSelected(id){
     let ind = selectedGroups.findIndex((e)=>{return e==id});
     if(ind==-1){
@@ -933,11 +935,13 @@ function toggleSelected(id){
     }
     selectedGroups.splice(ind,1);
 }
+
 function deleteSelected(){
     if(selectedGroups.length==0){
-        window.UI.ErrorMessage('Nincs egy csoport se kivĂĄlasztva!');
+        window.UI.ErrorMessage('Nincs egy csoport se kiválasztva!');
         return;
     }
+
     selectedGroups.forEach((selectedGroup)=>{
        let ind = groups.findIndex((group)=>{return group.id==selectedGroup});
        groups.splice(ind,1);
@@ -947,19 +951,21 @@ function deleteSelected(){
     renderGroupList();
 }
 
+
 function union(){
     if(selectedGroups.length<2){
-        window.top.UI.ErrorMessage("Nincs elegendĹ csoport kivĂĄlasztva");
+        window.top.UI.ErrorMessage("Nincs elegendő csoport kiválasztva");
         return;
     }
    
     let mainInd = groups.findIndex((group)=>{return group.id==selectedGroups[0]});
     let villages = [...groups[mainInd].villages];
+
     let name = groups[mainInd].name;
     for (let i = 1; i < selectedGroups.length; i++) {
         let subInd = groups.findIndex((group)=>{return group.id==selectedGroups[i]});
         let subVillages = [...groups[subInd].villages];
-        name+=" âŞ "+groups[subInd].name;
+        name+=" ∪ "+groups[subInd].name;
         subVillages.forEach((subVillage)=>{
             let ind= villages.findIndex((village)=>{return subVillage.x==village.x && subVillage.y==village.y});
             if(ind==-1){
@@ -968,26 +974,30 @@ function union(){
         })
     }
 
+
     groups.push({
         id:new Date().getTime(),
         name:name,
         color: groups[mainInd].color,
         villages:villages
     });
+
     selectedGroups=[];
     renderGroupSelect();
     renderGroupList();
     render();
 }
 
+
 function subtract(){
     if(selectedGroups.length<2){
-        window.top.UI.ErrorMessage("Nincs elegendĹ csoport kivĂĄlasztva");
+        window.top.UI.ErrorMessage("Nincs elegendő csoport kiválasztva");
         return;
     }
     let mainInd = groups.findIndex((group)=>{return group.id==selectedGroups[0]});
     let villages = [...groups[mainInd].villages];
     let name = groups[mainInd].name;
+
     for (let i = 1; i < selectedGroups.length; i++) {
         let subInd = groups.findIndex((group)=>{return group.id==selectedGroups[i]});
         let subVillages = [...groups[subInd].villages];
@@ -999,12 +1009,14 @@ function subtract(){
             }
         })
     }
+
     groups.push({
         id:new Date().getTime(),
         name:name,
         color: groups[mainInd].color,
         villages:villages
     });
+
     selectedGroups=[];
     renderGroupSelect();
     renderGroupList();
@@ -1012,9 +1024,10 @@ function subtract(){
 }
 
 
+
 window.section = () => {
     if(selectedGroups.length<2){
-        window.top.UI.ErrorMessage("Nincs elegendĹ csoport kivĂĄlasztva");
+        window.top.UI.ErrorMessage("Nincs elegendő csoport kiválasztva");
         return;
     }
     let mainInd = groups.findIndex((group)=>{return group.id==selectedGroups[0]});
@@ -1025,7 +1038,7 @@ window.section = () => {
         let subInd = groups.findIndex((group)=>{return group.id==selectedGroups[i]});
         let subVillages = [...groups[subInd].villages];
         let newVillages=[];
-        name+=" âŠ "+groups[subInd].name;
+        name+=" ∩ "+groups[subInd].name;
         villages.forEach((village)=>{
             let ind= subVillages.findIndex((subVillage)=>{return subVillage.x==village.x && subVillage.y==village.y});
             if(ind!=-1){
@@ -1040,23 +1053,28 @@ window.section = () => {
         color: groups[mainInd].color,
         villages:villages
     });
+
     selectedGroups=[];
     renderGroupSelect();
     renderGroupList();
     render();
 }
+
 function openFilter(){
     if(selectedGroups.length==0){
-        window.UI.ErrorMessage('Nincs egy csoport se kivĂĄlasztva!');
+        window.UI.ErrorMessage('Nincs egy csoport se kiválasztva!');
         return;
     }
+
     $('.filter-window').show();
     $('.group-items').find('input[type="checkbox"]').get().forEach((elem)=>{
         if(!$(elem).prop('disabled')){
             $(elem).attr("disabled", true);
         }
     })
+
 }
+
 function cancelFilter(){
     $('.filter-window').hide();
     filters=[];
@@ -1066,21 +1084,24 @@ function cancelFilter(){
         }
     })
 }
+
 function mainMenu(){
     $('.filter-main').show();
     $('.filter-sub').hide();
 }
+
 function barbMenu(){
     $('.filter-main').hide();
     $('.filter-sub').html(/*html*/`
         <div>
-            <button onclick="addFilter('barbs','+')" class="btn">+ BarbĂĄr</button>
-            <button onclick="addFilter('barbs','-')" class="btn">- BarbĂĄr</button>
-            <button onclick="mainMenu()" class="btn">MĂŠgse</button>
+            <button onclick="addFilter('barbs','+')" class="btn">+ Barbár</button>
+            <button onclick="addFilter('barbs','-')" class="btn">- Barbár</button>
+            <button onclick="mainMenu()" class="btn">Mégse</button>
         </div>
     `);
     $('.filter-sub').show();
 }
+
 function allyMenu(){
     let allies=[];
     selectedGroups.forEach((selectedGroup)=>{
@@ -1109,13 +1130,14 @@ function allyMenu(){
             </select>
         </div>
         <div>
-            <button onclick="addFilter('ally','+')" class="btn">+ klĂĄn</button>
-            <button onclick="addFilter('ally','-')" class="btn">- KlĂĄn</button>
-            <button onclick="mainMenu()" class="btn">MĂŠgse</button>
+            <button onclick="addFilter('ally','+')" class="btn">+ klán</button>
+            <button onclick="addFilter('ally','-')" class="btn">- Klán</button>
+            <button onclick="mainMenu()" class="btn">Mégse</button>
         </div>
     `);
     $('.filter-sub').show();
 }
+
 function playerMenu(){
     let players=[];
     selectedGroups.forEach((selectedGroup)=>{
@@ -1143,33 +1165,35 @@ function playerMenu(){
             </select>
         </div>
         <div>
-            <button onclick="addFilter('player','+')" class="btn">+ jĂĄtĂŠkos</button>
-            <button onclick="addFilter('player','-')" class="btn">- jĂĄtĂŠkos</button>
-            <button onclick="mainMenu()" class="btn">MĂŠgse</button>
+            <button onclick="addFilter('player','+')" class="btn">+ játékos</button>
+            <button onclick="addFilter('player','-')" class="btn">- játékos</button>
+            <button onclick="mainMenu()" class="btn">Mégse</button>
         </div>
     `);
     $('.filter-sub').show();
 }
+
 function bonusMenu(){
     $('.filter-main').hide();
     $('.filter-sub').html(/*html*/`
         <div>
             <select id="filter-bonus">
-                <option value="-1">Csak bĂłnusz</option>
-                <option value="0">Nem bĂłnusz</option>
+                <option value="-1">Csak bónusz</option>
+                <option value="0">Nem bónusz</option>
                 ${Object.keys(TWMap.bonus_data).map((key)=>{
                     return /*html*/`<option value="${key}">${TWMap.bonus_data[key].text}</option>`
                 }).join('')}
             </select>
         </div>
         <div>
-            <button onclick="addFilter('bonus','+')" class="btn">+ BĂşnusz</button>
-            <button onclick="addFilter('bonus','-')" class="btn">- BĂşnusz</button>
-            <button onclick="mainMenu()" class="btn">MĂŠgse</button>
+            <button onclick="addFilter('bonus','+')" class="btn">+ Búnusz</button>
+            <button onclick="addFilter('bonus','-')" class="btn">- Búnusz</button>
+            <button onclick="mainMenu()" class="btn">Mégse</button>
         </div>
     `);
     $('.filter-sub').show();
 }
+
 function pointMenu(){
     $('.filter-main').hide();
     $('.filter-sub').html(/*html*/`
@@ -1179,28 +1203,30 @@ function pointMenu(){
                 <option value=">" selected="">&gt;</option>
                 <option value="<">&lt;</option>
                 <option value="=">=</option>
-                <option value=">=">âĽ</option>
-                <option value="<=">â¤</option>
-                <option value="!=">â </option>
+                <option value=">=">≥</option>
+                <option value="<=">≤</option>
+                <option value="!=">≠</option>
             </select>
             <input type="number" id="filter-points">
         </div>
         <div>
             <button onclick="addFilter('points','+')" class="btn">+ Pont</button>
             <button onclick="addFilter('points','-')" class="btn">- Pont</button>
-            <button onclick="mainMenu()" class="btn">MĂŠgse</button>
+            <button onclick="mainMenu()" class="btn">Mégse</button>
         <div>
     `);
     $('.filter-sub').show();
 }
 
+
 function addFilter(type,op){
     let val=null;
     if(type=='points'){
         if($('html').find('#filter-points').val().trim()==""){
-            window.UI.ErrorMessage('A szĹąrĂŠsi ĂŠrtĂŠket kĂśtelezĹ megadni!')
+            window.UI.ErrorMessage('A szűrési értéket kötelező megadni!')
             return;
         }
+
         val={
             stmt:$('html').find('#filter-points-select').val(),
             val:$('html').find('#filter-points').val()
@@ -1230,33 +1256,35 @@ function addFilter(type,op){
     $('.filter-sub').hide();
     renderFilter()
 }
+
 function renderFilter(){
     let html='';
     filters.forEach((filter,index)=>{
         let text=``
         switch(filter.type){
             case 'player':
-                text=`JĂĄtĂŠkos ${filter.op=='-'? "eltĂĄvolĂ­tĂĄsa":"hozzĂĄadĂĄsa"}: ${filter.val.name}`;
+                text=`Játékos ${filter.op=='-'? "eltávolítása":"hozzáadása"}: ${filter.val.name}`;
             break;
             case 'ally':
-                text=`KlĂĄn ${filter.op=='-'? "eltĂĄvolĂ­tĂĄsa":"hozzĂĄadĂĄsa"}: ${filter.val.name}`;
+                text=`Klán ${filter.op=='-'? "eltávolítása":"hozzáadása"}: ${filter.val.name}`;
             break;
             case 'bonus':
-                text=`BĂłnusz ${filter.op=='-'? "eltĂĄvolĂ­tĂĄsa":"hozzĂĄadĂĄsa"}: ${filter.val.name}`;
+                text=`Bónusz ${filter.op=='-'? "eltávolítása":"hozzáadása"}: ${filter.val.name}`;
             break;
             case 'barbs':
-                text=`BarbĂĄrok ${filter.op=='-'? "eltĂĄvolĂ­tĂĄsa":"hozzĂĄadĂĄsa"}`;
+                text=`Barbárok ${filter.op=='-'? "eltávolítása":"hozzáadása"}`;
             break;
             case 'points':
-                text=`${filter.op=='-'? "EltĂĄvolĂ­tĂĄs":"HozzĂĄadĂĄs"} ha falu pont ${filter.val.stmt} ${filter.val.val}`;
+                text=`${filter.op=='-'? "Eltávolítás":"Hozzáadás"} ha falu pont ${filter.val.stmt} ${filter.val.val}`;
             break;
         }
         html+=/*html */`<div id="fi-${index}" class="filter-item">
         <span style="display:inline-flex"> 
         <div style="margin:3px 5px;width: 11px; height:11px; background-image: url(https://dshu.innogamescdn.com/asset/7fe7ab60/graphic/sorthandle.png); cursor:pointer" class="qbhandle ui-sortable-handle"></div>${text}</span>
-        <img onclick="removeFilter(${index})" src="https://dshu.innogamescdn.com/asset/7fe7ab60/graphic/delete.png" class="" data-title="TĂśrlĂŠs">
+        <img onclick="removeFilter(${index})" src="https://dshu.innogamescdn.com/asset/7fe7ab60/graphic/delete.png" class="" data-title="Törlés">
        </div>`;
     })
+
     $('.filter-items').html(html);
     $('.filter-items').sortable({
         update: ( ) => {
@@ -1270,19 +1298,23 @@ function renderFilter(){
         }
     });
 }
+
 function removeFilter(index){
     filters.splice(index,1);
     renderFilter();
 }
+
 function applyFilter(){
     if(selectedGroups.length==0){
-        window.UI.ErrorMessage('Nincs egy csoport se kivĂĄlasztva!')
+        window.UI.ErrorMessage('Nincs egy csoport se kiválasztva!')
         return;
     }
+
     if(filters.length==0){
-        window.UI.ErrorMessage('Nincs egy szĹąrĹ se hozzĂĄadva!')
+        window.UI.ErrorMessage('Nincs egy szűrő se hozzáadva!')
         return;
     }
+
     selectedGroups.forEach((selectedGroup)=>{
        
         let ind=groups.findIndex((group)=>{return group.id==selectedGroup});
@@ -1354,6 +1386,7 @@ function applyFilter(){
     cancelFilter()
     renderSelectedVillages();
 }
+
 function addPlayerFilter(filter,base,filtered){
     let result=[...filtered];
     base.forEach((village)=>{
@@ -1366,6 +1399,7 @@ function addPlayerFilter(filter,base,filtered){
     })
     return result;
 }
+
 function removePlayerFilter(filter,filtered){
     let result=[];
     filtered.forEach((village)=>{
@@ -1375,6 +1409,7 @@ function removePlayerFilter(filter,filtered){
     })
     return result;
 }
+
 function addAllyFilter(filter,base,filtered){
     let result=[...filtered];
     base.forEach((village)=>{
@@ -1390,6 +1425,7 @@ function addAllyFilter(filter,base,filtered){
     })
     return result;
 }
+
 function removeAllyFilter(filter,filtered){
     let result=[];
     filtered.forEach((village)=>{
@@ -1402,6 +1438,7 @@ function removeAllyFilter(filter,filtered){
     })
     return result;
 }
+
 function addBonusFilter(filter,base,filtered){
     let result=[...filtered];
     base.forEach((village)=>{
@@ -1414,6 +1451,7 @@ function addBonusFilter(filter,base,filtered){
     })
     return result;
 }
+
 function removeBonusFilter(filter,filtered){
     let result=[];
     filtered.forEach((village)=>{
@@ -1426,6 +1464,7 @@ function removeBonusFilter(filter,filtered){
     })
     return result;
 }
+
 function addBarbsFilter(base,filtered){
     let result=[...filtered];
     base.forEach((village)=>{
@@ -1435,6 +1474,7 @@ function addBarbsFilter(base,filtered){
     })
     return result;
 }
+
 function removeBarbsFilter(filtered){
     let result=[];
     filtered.forEach((village)=>{
@@ -1444,6 +1484,7 @@ function removeBarbsFilter(filtered){
     })
     return result;
 }
+
 function addPointsFilter(filter,base,filtered){
     let result=[...filtered];
     base.forEach((village)=>{
@@ -1453,6 +1494,7 @@ function addPointsFilter(filter,base,filtered){
     })
     return result;
 }
+
 function removePointsFilter(filter,filtered){
     let result=[];
     filtered.forEach((village)=>{
@@ -1462,6 +1504,7 @@ function removePointsFilter(filter,filtered){
     })
     return result;
 }
+
 function statement(op,x,val){
     switch (op) {
         case ">":
@@ -1478,7 +1521,8 @@ function statement(op,x,val){
             return x != val
     }
 }
+
 function copyCoords(){
-    window.UI.SuccessMessage('A koordinĂĄtĂĄk sikeresen vĂĄgĂłlapra lettek mĂĄsolva!')
+    window.UI.SuccessMessage('A koordináták sikeresen vágólapra lettek másolva!')
     navigator.clipboard.writeText(activeGroup.villages.map((village)=>{return village.x+"|"+village.y}).join(' '));
 }
