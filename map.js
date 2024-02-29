@@ -62,28 +62,28 @@ async function InitData(){
             let lastUpdate= localStorage.getItem('TW_API_LAST_UPDATE');
             if(lastUpdate<new Date().getTime() || lastUpdate==null){
                 await addLoadingModal();
-                await update()
+                await update();
             }
 
             let tVillages = db.transaction("villages");
             let rVillages = await tVillages.objectStore("villages").getAll();
 
             rVillages.onsuccess= () =>{
-                window.villages=rVillages.result
+                window.villages=rVillages.result;
                 dataLodaded();
             }
             
             tPlayers = db.transaction("players");
             rPlayers = await tPlayers.objectStore("players").getAll();
             rPlayers.onsuccess= () =>{
-                window.players=rPlayers.result
+                window.players=rPlayers.result;
                 dataLodaded();
             }
 
             tAllies = db.transaction("allies");
             rAllies = await tAllies.objectStore("allies").getAll();
             rAllies.onsuccess= () =>{
-                window.allies=rAllies.result
+                window.allies=rAllies.result;
                 dataLodaded();
             }
         
@@ -111,14 +111,12 @@ async function InitData(){
             let resVillages = await getData(`https://${window.location.host}/map/village.txt`);
             let resPlayers = await getData(`https://${window.location.host}/map/player.txt`);
             let resAllies = await getData(`https://${window.location.host}/map/ally.txt`);
-            await parseCSVToIndexed(resVillages,'villages',['id','name','x','y','player','points','rank'])
-            await parseCSVToIndexed(resPlayers,'players',['id','name','ally','villages','points','rank'])
-            await parseCSVToIndexed(resAllies,'allies',['id','name','tag','members','villages','points','all_points','rank'])
+            await parseCSVToIndexed(resVillages,'villages',['id','name','x','y','player','points','rank']);
+            await parseCSVToIndexed(resPlayers,'players',['id','name','ally','villages','points','rank']);
+            await parseCSVToIndexed(resAllies,'allies',['id','name','tag','members','villages','points','all_points','rank']);
             console.log('Updated allies');
             localStorage.setItem('TW_API_LAST_UPDATE',new Date(new Date().setDate(new Date().getDate() + 1)).getTime());
         }
-    
-
     })
 }
 
@@ -141,7 +139,7 @@ function addLoadingModal(){
         $('.popup_box_container').append('<div style="position: fixed;width: 100%;height: 100%;top:0;left:0;z-index:12001"></div>');
 
         setTimeout(()=>{
-            resolve()
+            resolve();
         },500)
     });
 }
@@ -159,10 +157,10 @@ function redirect(){
         setTimeout(()=>{
             window.location.href=`game.php?village=${game_data.village.id}&screen=map`
         },1000);
-        return true
+        return true;
     }
     backupTW=TWMap.map._handleClick;
-    return false
+    return false;
 }
 
 function getLastUpdate(){
@@ -465,7 +463,6 @@ function getVillagesByRect(points){
         }
 
         for (let i = 0; i < points.length-1; i++) {
-            
             if(calcIsInsideThickLineSegment(points[i],village,points[i+1],0.2)){
                 ins=true;
             }
@@ -634,10 +631,6 @@ function resetSelected(){
     render()
 }
 
-window.toClipBoard = () => {
-    navigator.clipboard.writeText(selectedVillages.trim());
-}
-
 window.renderModal = () => {
     selectedGroups=[];
     window.Dialog.show("groupsModal",
@@ -646,14 +639,10 @@ window.renderModal = () => {
             ::-webkit-scrollbar {
             width: 5px;
             }
-            
-            /* Track */
             ::-webkit-scrollbar-track {
                 box-shadow: inset 0 0 5px grey;
                 border-radius: 10px;
             }
-            
-            /* Handle */
             ::-webkit-scrollbar-thumb {
                 background: grey;
                 border-radius: 10px;
@@ -712,7 +701,6 @@ window.renderModal = () => {
             .village-items .village-row:nth-of-type(even){
                 background-color: #fff5da
             }
-
 
             .village-name {grid-area: village-name; }
             .point{grid-area: point; }
@@ -814,8 +802,7 @@ window.renderModal = () => {
                     <div class="checkbox">választ</div>
                     <div class="view">Nézet</div>
                 </div>
-                <div class="group-items">
-                </div>
+                <div class="group-items"></div>
             </div>
             <div class="villages">
                 <div class="village-row village-header"  >
@@ -825,9 +812,7 @@ window.renderModal = () => {
                     <div class="ally">Klán</div>
                     <div class="type">Típus</div>
                 </div>
-                <div class="village-items">
-                    
-                </div>
+                <div class="village-items"></div>
             </div>
             <div class="filter-window" style="display:none;">
                 <div class="filter-menu">
@@ -838,18 +823,13 @@ window.renderModal = () => {
                         <button class="btn" onclick="pointMenu()">Pont</button>
                         <button class="btn" onclick="bonusMenu()">Bónusz</button>   
                     </div>
-                    <div class="filter-sub">
-                
-                    </div>
+                    <div class="filter-sub"></div>
                 </div>
-                
-                <div class="filter-items">
-                
-                </div>
+                <div class="filter-items"></div>
                 <div class="filter-footer">
-                <input id="copyCheck" type="checkbox"/><label style="padding:5px">Másolat</label>
-                <button class="btn" onclick="applyFilter()">Alkalmaz</button>
-                <button class="btn" onclick="cancelFilter()">Mégse</button>   
+                    <input id="copyCheck" type="checkbox"/><label style="padding:5px">Másolat</label>
+                    <button class="btn" onclick="applyFilter()">Alkalmaz</button>
+                    <button class="btn" onclick="cancelFilter()">Mégse</button>   
                 </div>
             </div>
         </div>
