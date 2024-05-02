@@ -18,6 +18,129 @@ var activeGroup=null;
 var isDrawing=false;
 var db=null;
 var filters=[];
+const langSupported=['hu','en'];
+const navigatorLang=navigator.language.split('-')[0];
+
+if(!langSupported.includes(navigatorLang)){
+    navigatorLang='en';
+}
+
+const locals={
+    hu:{
+        map_loaded:"Térkép adatok betöltve!",
+        api_updated:"Api frissítve",
+        updating_map_data:'Térkép adatok frissítése',
+        redirect_to_map:"Átírányítás a térképre!",
+        groups:"Csoportok",
+        new_group:"Új csoport",
+        update_api:"Adatok frissítése",
+        api_last_update:"Api frissítve",
+        choose_group:"-- Válassz csoportot --",
+        color:"Szín",
+        name:"Név",
+        add:"Hozzáad",
+        cancel:"Mégse",
+        draw:"Rajzolás",
+        village_info:"Falu info",
+        concave:"Konkáv",
+        circle:"Kör",
+        single:"Egyenként",
+        reset:"Visszaállít",
+        group_name_req:"A csoport nevét kötelező megadni!",
+        union:"Összevon",
+        subtract:"Kivon",
+        section:"Metszet",
+        filter:"Szűrés",
+        delete:"Törlés",
+        copy:"Másolás",
+        carbon_copy:"Másolat",
+        groupe_name:"Csoport Név",
+        select:"választ",
+        view:"Nézet",
+        village_name:"Falu Név",
+        points:"Pontok",
+        owner:"Tulajdonos",
+        ally:"Klán",
+        type:"Típus",
+        barb:"Barbár",
+        player:"Játékos",
+        bonus:"Bónusz",
+        apply:"Alkalmaz",
+        rename:"Átnevez",
+        no_group_selected:"Nincs egy csoport se kiválasztva!",
+        not_enough_group_selected:"Nincs elegendő csoport kiválasztva",
+        only_barbs:"Csak bónusz",
+        not_bonus:"Nem bónusz",
+        village_points:"Falu pontok",
+        filter_must_be_entered:"A szűrési értéket kötelező megadni!",
+        remove_it:"eltávolítása",
+        add_it:"hozzáadása",
+        remove:"Eltávolítás",
+        if_village_points:"ha falu pontok",
+        no_filter_added:"Nincs egy szűrő se hozzáadva!",
+        copied_to_clipboard:"A koordináták sikeresen vágólapra lettek másolva!",
+        barbs:"Barbárok",
+        max_name_length:"A csoport neve max 20 karakter lehet!"
+    },
+    en:{
+        map_loaded:"Map data loaded!",
+         api_updated:"Api updated",
+         updating_map_data:'Updating map data',
+         redirect_to_map:"Redirecting to the map!",
+         groups:"Groups",
+         new_group:"New Group",
+         update_api:"Update Data",
+         api_last_update:"Api updated",
+         choose_group:"-- Choose a group --",
+         color:"Color",
+         name:"Name",
+         add:"Add",
+         cancel:"Cancel",
+         draw:"Drawing",
+         village_info:"Village info",
+         concave:"Concave",
+         circle:"Circle",
+         single:"Single",
+         reset:"Reset",
+         group_name_req:"The name of the group must be entered!",
+         union:"Union",
+         subtract:"Subtract",
+         section:"Section",
+         filter:"Filter",
+         delete:"Delete",
+         copy:"Copy",
+         carbon_copy:"Carbon Copy",
+         groupe_name:"Group Name",
+         select:"choose",
+         view:"View",
+         village_name:"Village Name",
+         points:"Points",
+         owner:"Owner",
+         ally: "Tribe",
+         type:"Type",
+         barb:"Barb",
+         player:"Player",
+         bonus:"Bonus",
+         apply:"Apply",
+         rename:"Rename",
+         no_group_selected:"No group is selected!",
+         not_enough_group_selected:"Not enough groups selected",
+         only_barbs:"Bonus Only",
+         not_bonus:"Not bonus",
+         village_points:"Village Points",
+         filter_must_be_entered:"The filtering value must be entered!",
+         remove_it:"remove",
+         add_it:"add",
+         remove:"Remove",
+         if_village_points:"if village points",
+         no_filter_added:"No filter added!",
+         copied_to_clipboard:"The coordinates were successfully copied to the clipboard!",
+         barbs:"Barbs",
+         no_villages_in_group:"There are no villages in the group!",
+         max_name_length:"The group name can be a maximum of 20 characters",
+    }
+};
+var _lang=locals[navigatorLang];
 
 (async () =>{
     if(redirect())
@@ -36,7 +159,7 @@ async function InitData(){
             loadCnt++;
             if(loadCnt==3){
                 console.log('All data loaded ✔');
-                window.top.UI.SuccessMessage("Térkép adatok betöltve!");
+                window.top.UI.SuccessMessage(_lang.map_loaded);
                 window.Dialog.close("launchDialog");
                 resolve();
             }
@@ -123,14 +246,14 @@ async function InitData(){
 async function updateApi(){
     localStorage.setItem('TW_API_LAST_UPDATE',new Date().getTime());
     await InitData();
-    $("#updated").text(`Api frissítve: ${getLastUpdate()}`);
+    $("#updated").text(`${_lang.api_updated}: ${getLastUpdate()}`);
 }
 
 function addLoadingModal(){
     return new Promise((resolve,reject)=>{
         window.Dialog.show("launchDialog",
             /*html*/`
-                <h1 style="text-align:center">Térkép adatok frissítése</h1>
+                <h1 style="text-align:center">${_lang.updating_map_data}</h1>
                 <div id="counter-loading" style="display: flex; justify-content: center; width: 100%;">
                     <img style="height:25px" src="https://dshu.innogamescdn.com/asset/6389cdba/graphic/loading.gif"><span style="padding:5px">Betöltés...</span>
                 </div>
@@ -153,7 +276,7 @@ function getData(ajaxurl) {
 
 function redirect(){
     if(!window.location.href.includes('screen=map')) {
-        window.top.UI.InfoMessage("Átírányítás a térképre!");
+        window.top.UI.InfoMessage(_lang.redirect_to_map);
         setTimeout(()=>{
             window.location.href=`game.php?village=${game_data.village.id}&screen=map`
         },1000);
@@ -173,36 +296,36 @@ function loadUI(){
     $("#content_value").prepend(/*html*/`
         <div style="display:table;width:100%">
             <div style="margin:5px 0;width:100%">
-                <button class="btn" onclick="renderModal()">Csoportok</button>
-                <button id="newGroup" class="btn" onclick="newGroup()">Új csoport</button>
+                <button class="btn" onclick="renderModal()">${_lang.groups}</button>
+                <button id="newGroup" class="btn" onclick="newGroup()">${_lang.new_group}</button>
                 <div style="float:right" >
-                <span id="updated" style="float:right">Api frissítve: ${getLastUpdate()}</span><br>
-                <button style="float:right;margin-top:5px;" class="btn" onclick="updateApi()">Adatok frissítése</button>
+                <span id="updated" style="float:right">${_lang.api_last_update}: ${getLastUpdate()}</span><br>
+                <button style="float:right;margin-top:5px;" class="btn" onclick="updateApi()">${_lang.update_api}</button>
                 </div>
             </div>
-            <select style="margin:5px 0; font-size:14px; width:100px" onchange="groupChanged()" id="groupSelector" placeholder="-- Válassz csoportot--"></select>
+            <select style="margin:5px 0; font-size:14px; width:100px" onchange="groupChanged()" id="groupSelector" placeholder="${_lang.choose_group}"></select>
             <div style="margin:5px 0;display:none;" id="addGroup">
-                <label for="color">Szín:</label>
+                <label for="color">${_lang.color}:</label>
                 <input type="color" id="color" value="#e66465" />
-                <label for="groupName">Név:</label>
+                <label for="groupName">${_lang.name}:</label>
                 <input type="text" id="groupName" value="#e66465" />
-                <button class="btn" onclick="addGroup()">Hozzáad</button>
-                <button class="btn" onclick="cancelAdd()">Mégse</button>
+                <button class="btn" onclick="addGroup()">${_lang.add}</button>
+                <button class="btn" onclick="cancelAdd()">${_lang.cancel}</button>
             </div>
             <div style="margin:5px 0;display:none;" id="tools">
                 <input type="checkbox" onchange="toggleDrawing()" id="draw" >
-                <label for="draw" >Rajzolás</label>
+                <label for="draw" >${_lang.draw}</label>
                 <input type="checkbox" onchange="toggleInfo()" id="vinfo" >
-                <label for="vinfo" >FaluInfo</label>
+                <label for="vinfo" >${_lang.village_info}</label>
                 <input type="radio" id="concave" name="tool">
-                <label for="concave">Konkáv</label>
+                <label for="concave">${_lang.concave}</label>
                 <input type="radio" id="circle" name="tool">
-                <label for="circle">Kör</label>
+                <label for="circle">${_lang.circle}</label>
                 <input type="number" id="radius" value="10" min="1" max="1000" >
                 <input type="radio" id="single" name="tool">
-                <label for="circle">Egyenként</label>
-                <button class="btn" onclick="addToGroup()">Hozzáad</button>
-                <button class="btn" onclick="resetSelected()">visszaállít</button>
+                <label for="circle">${_lang.single}</label>
+                <button class="btn" onclick="addToGroup()">${_lang.add}</button>
+                <button class="btn" onclick="resetSelected()">${_lang.reset}</button>
             </div>
         </div>
     `);
@@ -240,7 +363,11 @@ function newGroup(){
 
 function addGroup(){
     if($('#groupName').val().trim()==""){
-        window.UI.ErrorMessage('A csoport nevét kötelező megadni!')
+        window.UI.ErrorMessage(_lang.group_name_req)
+        return;
+    }
+    if($('#groupName').val().trim().length>20){
+        window.UI.ErrorMessage(_lang.max_name_length)
         return;
     }
 
@@ -653,7 +780,7 @@ window.renderModal = () => {
             .container {
                 height:500px;
                 display: grid; 
-                grid-template-columns: 1fr 1fr; 
+                grid-template-columns: 1fr 1.5fr; 
                 grid-template-rows: 40px calc(100% - 40px); 
                 gap: 0px 0px; 
                 grid-template-areas: 
@@ -664,7 +791,7 @@ window.renderModal = () => {
             .groups { grid-area: groups; text-align:center}
             .villages { grid-area: villages; text-align:center}
             .group-row {  display: grid;
-                grid-template-columns: 3fr 2fr 1fr 50px;
+                grid-template-columns: 3fr 1fr 0.5fr 50px;
                 grid-template-rows: 30px;
                 gap: 0px 0px;
                 grid-auto-flow: row;
@@ -686,7 +813,7 @@ window.renderModal = () => {
             .group-items{overflow-y: scroll; height: calc(100% - 40px);}
 
             .village-row {  display: grid;
-                grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+                grid-template-columns: 3fr 1fr 1.5fr 0.5fr 50px;
                 grid-template-rows: 30px;
                 gap: 0px 0px;
                 grid-auto-flow: row;
@@ -787,49 +914,49 @@ window.renderModal = () => {
         </style>
         <div class="container">
             <div class="menu">
-                <button class="btn" onclick="union()">Összevon</button>
-                <button class="btn" onclick="subtract()">Kivon</button>
-                <button class="btn" onclick="section()">Metszet</button>
-                <button class="btn" onclick="openFilter()">Szűrés</button>
-                <button class="btn" onclick="deleteSelected()">Törlés</button>
-                <span>TW-mapper - v1.1 by: toldi26</span>
-                <button style="float:right;" class="btn" onclick="copyCoords()">Másolás</button>
+                <button class="btn" onclick="union()">${_lang.union}</button>
+                <button class="btn" onclick="subtract()">${_lang.subtract}</button>
+                <button class="btn" onclick="section()">${_lang.section}</button>
+                <button class="btn" onclick="openFilter()">${_lang.filter}</button>
+                <button class="btn" onclick="deleteSelected()">${_lang.delete}</button>
+                <span>TW-mapper - v1.2 by: toldi26</span>
+                <button style="float:right;" class="btn" onclick="copyCoords()">${_lang.copy}</button>
             </div>
             <div class="groups">
                 <div class="group-row group-header" >
-                    <div class="name">Csoport Név</div>
-                    <div class="color">Szín</div>
-                    <div class="checkbox">választ</div>
-                    <div class="view">Nézet</div>
+                    <div class="name">${_lang.name}</div>
+                    <div class="color">${_lang.color}</div>
+                    <div class="checkbox">✔</div>
+                    <div class="view">${_lang.view}</div>
                 </div>
                 <div class="group-items"></div>
             </div>
             <div class="villages">
                 <div class="village-row village-header"  >
-                    <div class="village-name">Falu Név</div>
-                    <div class="point">Pont</div>
-                    <div class="owner">Tulajdonos</div>
-                    <div class="ally">Klán</div>
-                    <div class="type">Típus</div>
+                    <div class="village-name">${_lang.village_name}</div>
+                    <div class="point">${_lang.points}</div>
+                    <div class="owner">${_lang.owner}</div>
+                    <div class="ally">${_lang.ally}</div>
+                    <div class="type">${_lang.type}</div>
                 </div>
                 <div class="village-items"></div>
             </div>
             <div class="filter-window" style="display:none;">
                 <div class="filter-menu">
                     <div class="filter-main">
-                        <button class="btn" onclick="barbMenu()">Barbár</button>
-                        <button class="btn" onclick="playerMenu()">Játékos</button>  
-                        <button class="btn" onclick="allyMenu()">Klán</button>
-                        <button class="btn" onclick="pointMenu()">Pont</button>
-                        <button class="btn" onclick="bonusMenu()">Bónusz</button>   
+                        <button class="btn" onclick="barbMenu()">${_lang.barb}</button>
+                        <button class="btn" onclick="playerMenu()">${_lang.player}</button>  
+                        <button class="btn" onclick="allyMenu()">${_lang.ally}</button>
+                        <button class="btn" onclick="pointMenu()">${_lang.points}</button>
+                        <button class="btn" onclick="bonusMenu()">${_lang.bonus}</button>   
                     </div>
                     <div class="filter-sub"></div>
                 </div>
                 <div class="filter-items"></div>
                 <div class="filter-footer">
-                    <input id="copyCheck" type="checkbox"/><label style="padding:5px">Másolat</label>
-                    <button class="btn" onclick="applyFilter()">Alkalmaz</button>
-                    <button class="btn" onclick="cancelFilter()">Mégse</button>   
+                    <input id="copyCheck" type="checkbox"/><label style="padding:5px">${_lang.carbon_copy}</label>
+                    <button class="btn" onclick="applyFilter()">${_lang.apply}</button>
+                    <button class="btn" onclick="cancelFilter()">${_lang.cancel}</button>   
                 </div>
             </div>
         </div>
@@ -845,7 +972,7 @@ function renderGroupList(){
                 <div class="name">${group.name} (${group.villages.length})<a onclick="editGroupName(${group.id})" class="rename-icon" href="#" data-title="Átnevez"></a></div>
                 <div class="color"><input onchange="changeColor(${group.id})" style="height:20px" type="color" value="${group.color}"></div>
                 <div class="checkbox"><input onclick="toggleSelected(${group.id})" type="checkbox" value="${group.id}"></div>
-                <div class="view"><button onclick="loadActiveGoup(${group.id})" class="btn">-></button></div>
+                <div class="view"><button onclick="loadActiveGoup(${group.id})" class="btn">➜</button></div>
             </div>
         `
     })
@@ -853,15 +980,28 @@ function renderGroupList(){
 }
 
 function editGroupName(id){
+  
+
+
     let idx = groups.findIndex((group)=>{return group.id==id});
-    $('html').find(`#g-${id}`).find('.name').html(`<input value="${groups[idx].name}" type="text"/><button onclick="saveGroupName(${groups[idx].id})" >Átnevez</button>`)
+    $('html').find(`#g-${id}`).find('.name').html(`<input value="${groups[idx].name}" type="text"/><button class="btn" onclick="saveGroupName(${groups[idx].id})" >${_lang.rename}</button>`)
     
 }
 
 function saveGroupName(id){
+    let val=$('html').find(`#g-${id}`).find('.name input').val().trim();
+    if(val.length==0){
+        window.UI.ErrorMessage(_lang.group_name_req)
+        return;
+    }
+    if(val.length>20){
+        window.UI.ErrorMessage(_lang.max_name_length)
+        return;
+    }
+
     let idx = groups.findIndex((group)=>{return group.id==id});
-    groups[idx].name=$('html').find(`#g-${id}`).find('.name input').val();
-    $('html').find(`#g-${id}`).find('.name').html(`${groups[idx].name} (${groups[idx].villages.length})<a onclick="editGroupName(${groups[idx].id})" class="rename-icon" href="#" data-title="Átnevez"></a>`);
+    groups[idx].name=val;
+    $('html').find(`#g-${id}`).find('.name').html(`${groups[idx].name} (${groups[idx].villages.length})<a onclick="editGroupName(${groups[idx].id})" class="rename-icon" href="#" data-title="${_lang.rename}"></a>`);
     renderGroupSelect();
 }
 
@@ -900,7 +1040,7 @@ function renderSelectedVillages(){
             <div class="point">${village.points}</div>
             <div class="owner">${playerName}</div>
             <div class="ally">${AllyName}</div>
-            <div class="type">${village.rank>0? `<span class="bonus_icon bonus_icon_${village.rank}"/>`:''}</div>
+            <div class="type">${village.rank>0 ? /* html */`<span class="bonus_icon bonus_icon_${village.rank}" />`:''}</div>
         </div>
         `
     })
@@ -918,7 +1058,7 @@ function toggleSelected(id){
 
 function deleteSelected(){
     if(selectedGroups.length==0){
-        window.UI.ErrorMessage('Nincs egy csoport se kiválasztva!');
+        window.UI.ErrorMessage(_lang.no_group_selected);
         return;
     }
 
@@ -934,7 +1074,7 @@ function deleteSelected(){
 
 function union(){
     if(selectedGroups.length<2){
-        window.top.UI.ErrorMessage("Nincs elegendő csoport kiválasztva");
+        window.top.UI.ErrorMessage(_lang.not_enough_group_selected);
         return;
     }
    
@@ -971,7 +1111,7 @@ function union(){
 
 function subtract(){
     if(selectedGroups.length<2){
-        window.top.UI.ErrorMessage("Nincs elegendő csoport kiválasztva");
+        window.top.UI.ErrorMessage(_lang.no_group_selected);
         return;
     }
     let mainInd = groups.findIndex((group)=>{return group.id==selectedGroups[0]});
@@ -1007,7 +1147,7 @@ function subtract(){
 
 window.section = () => {
     if(selectedGroups.length<2){
-        window.top.UI.ErrorMessage("Nincs elegendő csoport kiválasztva");
+        window.top.UI.ErrorMessage(_lang.no_group_selected);
         return;
     }
     let mainInd = groups.findIndex((group)=>{return group.id==selectedGroups[0]});
@@ -1042,7 +1182,7 @@ window.section = () => {
 
 function openFilter(){
     if(selectedGroups.length==0){
-        window.UI.ErrorMessage('Nincs egy csoport se kiválasztva!');
+        window.UI.ErrorMessage(_lang.no_group_selected);
         return;
     }
 
@@ -1074,9 +1214,9 @@ function barbMenu(){
     $('.filter-main').hide();
     $('.filter-sub').html(/*html*/`
         <div>
-            <button onclick="addFilter('barbs','+')" class="btn">+ Barbár</button>
-            <button onclick="addFilter('barbs','-')" class="btn">- Barbár</button>
-            <button onclick="mainMenu()" class="btn">Mégse</button>
+            <button onclick="addFilter('barbs','+')" class="btn">+ ${_lang.barb}</button>
+            <button onclick="addFilter('barbs','-')" class="btn">- ${_lang.barb}</button>
+            <button onclick="mainMenu()" class="btn">${_lang.cancel}</button>
         </div>
     `);
     $('.filter-sub').show();
@@ -1084,12 +1224,18 @@ function barbMenu(){
 
 function allyMenu(){
     let allies=[];
+    console.log(window.allies);
+
+
     selectedGroups.forEach((selectedGroup)=>{
         let gInd=groups.findIndex((group)=>{return group.id==selectedGroup})
+        if(gInd==-1) return;
         groups[gInd].villages.forEach((village)=>{
             if(village.player!=0){
                 let pIndex=window.players.findIndex((player)=>{return player.id==village.player})
+                if(pIndex==-1) return;
                 let aIndex=window.allies.findIndex((ally)=>{return window.players[pIndex].ally==ally.id})
+                if(aIndex==-1) return;
                 let aIn=allies.findIndex((ally)=>{return ally.id==window.allies[aIndex].id})
                 if(aIn==-1){
                     allies.push({
@@ -1100,6 +1246,7 @@ function allyMenu(){
             }
         })
     })
+    allies.sort((ally1,ally2)=>{return ally1.tag<ally2.tag? -1:1})
     $('.filter-main').hide();
     $('.filter-sub').html(/*html*/`
         <div>
@@ -1110,9 +1257,9 @@ function allyMenu(){
             </select>
         </div>
         <div>
-            <button onclick="addFilter('ally','+')" class="btn">+ klán</button>
-            <button onclick="addFilter('ally','-')" class="btn">- Klán</button>
-            <button onclick="mainMenu()" class="btn">Mégse</button>
+            <button onclick="addFilter('ally','+')" class="btn">+ ${_lang.ally}</button>
+            <button onclick="addFilter('ally','-')" class="btn">- ${_lang.ally}</button>
+            <button onclick="mainMenu()" class="btn">${_lang.cancel}</button>
         </div>
     `);
     $('.filter-sub').show();
@@ -1135,6 +1282,7 @@ function playerMenu(){
             }
         })
     })
+    players.sort((player1,player2)=>{return player1.name<player2.name? -1:1});
     $('.filter-main').hide();
     $('.filter-sub').html(/*html*/`
         <div>
@@ -1145,9 +1293,9 @@ function playerMenu(){
             </select>
         </div>
         <div>
-            <button onclick="addFilter('player','+')" class="btn">+ játékos</button>
-            <button onclick="addFilter('player','-')" class="btn">- játékos</button>
-            <button onclick="mainMenu()" class="btn">Mégse</button>
+            <button onclick="addFilter('player','+')" class="btn">+ ${_lang.player}</button>
+            <button onclick="addFilter('player','-')" class="btn">- ${_lang.player}</button>
+            <button onclick="mainMenu()" class="btn">${_lang.cancel}</button>
         </div>
     `);
     $('.filter-sub').show();
@@ -1158,17 +1306,17 @@ function bonusMenu(){
     $('.filter-sub').html(/*html*/`
         <div>
             <select id="filter-bonus">
-                <option value="-1">Csak bónusz</option>
-                <option value="0">Nem bónusz</option>
+                <option value="-1">${_lang.only_barbs}</option>
+                <option value="0">${_lang.not_bonus}</option>
                 ${Object.keys(TWMap.bonus_data).map((key)=>{
                     return /*html*/`<option value="${key}">${TWMap.bonus_data[key].text}</option>`
                 }).join('')}
             </select>
         </div>
         <div>
-            <button onclick="addFilter('bonus','+')" class="btn">+ Búnusz</button>
-            <button onclick="addFilter('bonus','-')" class="btn">- Búnusz</button>
-            <button onclick="mainMenu()" class="btn">Mégse</button>
+            <button onclick="addFilter('bonus','+')" class="btn">+ ${_lang.bonus}</button>
+            <button onclick="addFilter('bonus','-')" class="btn">-  ${_lang.bonus}</button>
+            <button onclick="mainMenu()" class="btn"> ${_lang.cancel}</button>
         </div>
     `);
     $('.filter-sub').show();
@@ -1178,7 +1326,7 @@ function pointMenu(){
     $('.filter-main').hide();
     $('.filter-sub').html(/*html*/`
         <div>
-            <label>Falu pont: </label>
+            <label>${_lang.village_points}: </label>
             <select id="filter-points-select">
                 <option value=">" selected="">&gt;</option>
                 <option value="<">&lt;</option>
@@ -1190,9 +1338,9 @@ function pointMenu(){
             <input type="number" id="filter-points">
         </div>
         <div>
-            <button onclick="addFilter('points','+')" class="btn">+ Pont</button>
-            <button onclick="addFilter('points','-')" class="btn">- Pont</button>
-            <button onclick="mainMenu()" class="btn">Mégse</button>
+            <button onclick="addFilter('points','+')" class="btn">+ ${_lang.points}</button>
+            <button onclick="addFilter('points','-')" class="btn">- ${_lang.points}</button>
+            <button onclick="mainMenu()" class="btn">${_lang.cancel}</button>
         <div>
     `);
     $('.filter-sub').show();
@@ -1203,13 +1351,13 @@ function addFilter(type,op){
     let val=null;
     if(type=='points'){
         if($('html').find('#filter-points').val().trim()==""){
-            window.UI.ErrorMessage('A szűrési értéket kötelező megadni!')
+            window.UI.ErrorMessage(_lang.filter_must_be_entered)
             return;
         }
 
         val={
             stmt:$('html').find('#filter-points-select').val(),
-            val:$('html').find('#filter-points').val()
+            val:parseInt($('html').find('#filter-points').val())
         }
     }else if(type=='player'){
         val={
@@ -1218,12 +1366,12 @@ function addFilter(type,op){
         }
     }else if(type=='ally'){
         val={
-            id:$('html').find('#filter-ally').val(),
+            id:parseInt($('html').find('#filter-ally').val()),
             name:$('html').find('#filter-ally option:selected').text()
         }
     }else if(type=='bonus'){
         val={
-            id:$('html').find('#filter-bonus').val(),
+            id:parseInt($('html').find('#filter-bonus').val()),
             name:$('html').find('#filter-bonus option:selected').text()
         }
     }
@@ -1243,19 +1391,19 @@ function renderFilter(){
         let text=``
         switch(filter.type){
             case 'player':
-                text=`Játékos ${filter.op=='-'? "eltávolítása":"hozzáadása"}: ${filter.val.name}`;
+                text=`${_lang.player} ${filter.op=='-'? _lang.remove_it:_lang.add_it}: ${filter.val.name}`;
             break;
             case 'ally':
-                text=`Klán ${filter.op=='-'? "eltávolítása":"hozzáadása"}: ${filter.val.name}`;
+                text=`${_lang.ally} ${filter.op=='-'? _lang.remove_it:_lang.add_it}: ${filter.val.name}`;
             break;
             case 'bonus':
-                text=`Bónusz ${filter.op=='-'? "eltávolítása":"hozzáadása"}: ${filter.val.name}`;
+                text=`${_lang.bonus} ${filter.op=='-'? _lang.remove_it:_lang.add_it}: ${filter.val.name}`;
             break;
             case 'barbs':
-                text=`Barbárok ${filter.op=='-'? "eltávolítása":"hozzáadása"}`;
+                text=`${_lang.barbs} ${filter.op=='-'? _lang.remove_it:_lang.add_it}`;
             break;
             case 'points':
-                text=`${filter.op=='-'? "Eltávolítás":"Hozzáadás"} ha falu pont ${filter.val.stmt} ${filter.val.val}`;
+                text=`${filter.op=='-'? _lang.remove:_lang.add} ${if_village_points} ${filter.val.stmt} ${filter.val.val}`;
             break;
         }
         html+=/*html */`<div id="fi-${index}" class="filter-item">
@@ -1286,12 +1434,12 @@ function removeFilter(index){
 
 function applyFilter(){
     if(selectedGroups.length==0){
-        window.UI.ErrorMessage('Nincs egy csoport se kiválasztva!')
+        window.UI.ErrorMessage(_lang.no_group_selected)
         return;
     }
 
     if(filters.length==0){
-        window.UI.ErrorMessage('Nincs egy szűrő se hozzáadva!')
+        window.UI.ErrorMessage(_lang.no_filter_added)
         return;
     }
 
@@ -1303,10 +1451,11 @@ function applyFilter(){
         let reseted=false;
         filters.forEach((filter)=>{
             if(filter.op=="+" && !reseted){
+                console.log('reset');
                 baseVillages=[...villages];
                 villages=[];
                 reseted=true;
-            }else{
+            }else if(filter.op=="-"){
                 reseted=false;
             }
             switch(filter.type){
@@ -1353,6 +1502,7 @@ function applyFilter(){
             cc.villages=villages;
             cc.id=new Date().getTime(),
             groups.push(cc)
+            loadActiveGoup(cc.id)
         }else{
             groups[ind].villages=villages;
         }
@@ -1391,18 +1541,19 @@ function removePlayerFilter(filter,filtered){
 }
 
 function addAllyFilter(filter,base,filtered){
+    console.log('add ally',filter,base,filtered);
     let result=[...filtered];
     base.forEach((village)=>{
-        pInd=window.players.findIndex((player)=>{return player.id==village.player});
-        if(pInd>-1){
-            if(window.players[pInd].ally==filter.val.id){
-                let ind=filtered.findIndex((fVillage)=>{return fVillage.id==village.id});
-                if(ind==-1){
-                    result.push(village);
-                }
+        let pInd=window.players.findIndex((player)=>{return player.id==village.player});
+        if(pInd==-1) return;
+        if(window.players[pInd].ally==filter.val.id){
+            let ind=filtered.findIndex((fVillage)=>{return fVillage.id==village.id});
+            if(ind==-1){
+                result.push(village);
             }
         }
     })
+    console.log(result);
     return result;
 }
 
@@ -1466,6 +1617,7 @@ function removeBarbsFilter(filtered){
 }
 
 function addPointsFilter(filter,base,filtered){
+    console.log(filter,base,filtered);
     let result=[...filtered];
     base.forEach((village)=>{
         if(statement(filter.val.stmt,village.points,parseInt(filter.val.val))){
@@ -1503,6 +1655,6 @@ function statement(op,x,val){
 }
 
 function copyCoords(){
-    window.UI.SuccessMessage('A koordináták sikeresen vágólapra lettek másolva!')
+    window.UI.SuccessMessage(_lang.copied_to_clipboard)
     navigator.clipboard.writeText(activeGroup.villages.map((village)=>{return village.x+"|"+village.y}).join(' '));
 }
