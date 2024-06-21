@@ -1,0 +1,31 @@
+{
+  "name": "tw-mapper",
+  "version": "1.0.0",
+  "description": "tribal wars map script",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "build:watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KincsesBence/TW-Mapper.git"
+  },
+  "author": "toldi26",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KincsesBence/TW-Mapper/issues"
+  },
+  "homepage": "https://github.com/KincsesBence/TW-Mapper#readme",
+  "devDependencies": {
+    "css-loader": "^6.8.1",
+    "to-string-loader": "^1.2.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@types/jquery": "^3.5.29"
+  }
+}
