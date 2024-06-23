@@ -84,7 +84,7 @@ declare global {
     mapMenu:mapMenu;
     groups:group[];
     activeGroup:group;
-    backupTW:() => void
+    backupTW:(e:any) => boolean
     ctxMini:CanvasRenderingContext2D,
     ctxBig:CanvasRenderingContext2D,
     translateBig:Vec2d
