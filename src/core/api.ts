@@ -1,4 +1,5 @@
 import { loadingWindow } from "../view/loadingWindow";
+import { Lang } from "./Language";
 
 async function parseCSVToIndexed(data:string,tableName:string,fields:string[]){
     console.log('started '+tableName);
@@ -14,10 +15,8 @@ async function sendUpdate(lines:string[],i:number,tableName:string,fields:string
         await window.DB.setData(tableName,obj)
         let pct:number=Math.ceil((i+1)/lines.length*100);$('html').find('.mapper-loader-label').text(`${pct}%`);
         $('html').find('#mapper-loader-pct').css('width',`${pct}%`)
-        $('html').find('#mapper-loading span').text(`${tableName} betöltése...` );
+        $('html').find('#mapper-loading span').text(`${Lang(tableName) } ${Lang('loading') }...` );
         i++;
-        console.log(i,lines.length,i<lines.length);
-        
         if(i<lines.length){
             await sendUpdate(lines,i,tableName,fields);
         }
@@ -40,7 +39,7 @@ function decodeLine(line:string,fields:string[]){
     return obj;
 }
 
-function getLastUpdate(){
+export function getLastUpdate(){
     let lastUpdate= new Date(parseInt(localStorage.getItem('TW_API_LAST_UPDATE'))-(60*60*24*1000));
     return lastUpdate.toLocaleString('hu-HU');
 }
@@ -58,7 +57,7 @@ export async function updateWorldData(){
     await update()
 }
 
-async function update() {
+export async function update() {
     console.log('Updating...');
     window.Dialog.show("launchDialog",loadingWindow());
     $('.popup_box_close').hide();
@@ -72,12 +71,11 @@ async function update() {
     await wait(1000);
     await parseCSVToIndexed(resAllies,'allies',['id','name','tag','members','villages','points','all_points','rank']);
     await wait(1000);
-    console.log('Updated allies');
     localStorage.setItem('TW_API_LAST_UPDATE',new Date(new Date().setDate(new Date().getDate() + 1)).getTime().toString());
-    $('html').find('#mapper-loading span').text(`A betöltés befejeződött` );
-    setTimeout(()=>{
-        window.Dialog.close("launchDialog");
-    },2000)
+    $('html').find('#mapper-loading span').text(Lang('api_updated') );
+    await wait(2000);
+    window.Dialog.close("launchDialog");
+    console.log('Update finished');
 }
 
 async function wait(ms:number) {
