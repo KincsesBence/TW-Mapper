@@ -87,3 +87,13 @@ async function wait(ms:number) {
     
 }
 
+export function redirect(){
+    if(!window.location.href.includes('screen=map')) {
+        window.top.UI.InfoMessage(Lang('redirect_to_map'));
+        setTimeout(()=>{
+            window.location.href=`game.php?village=${window.game_data.village.id}&screen=map`
+        },1000);
+        return true;
+    }
+    return false;
+}

@@ -141,9 +141,7 @@ export class Vec2d{
      * @returns {Vec2d} summed vector
      */
     add(v:Vec2d){
-        this.x+=v.x, 
-        this.y+=v.y
-        return new Vec2d(this.x,this.y);
+        return new Vec2d(this.x+v.x,this.y+v.y);
     }
      /**
      * diff of the context vector with a given vector
@@ -152,9 +150,7 @@ export class Vec2d{
      * @returns {Vec2d} diff vector
      */
     subtr(v:Vec2d){
-        this.x-=v.x, 
-        this.y-=v.y
-        return new Vec2d(this.x,this.y);
+        return new Vec2d(this.x-v.x,this.y-v.y);
     }
     equal(v:Vec2d){
         return this.x==v.x && this.y==v.y

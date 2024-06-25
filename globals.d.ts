@@ -75,6 +75,10 @@ declare global {
     map:map
   }
 
+  interface gameData{
+    village:village
+  }
+
   interface Window {
     Lang:string;
     UI:UI,
@@ -93,6 +97,7 @@ declare global {
     activeMarker:number;
     canDraw:boolean;
     villages:village[];
+    game_data:gameData
   }
 
   interface UI {

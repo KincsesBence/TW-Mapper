@@ -1,10 +1,12 @@
 import { determineLang } from "./core/Language";
-import { updateWorldData } from "./core/api";
+import { redirect, updateWorldData } from "./core/api";
 import { indexedDBHandler } from "./core/indexedDBHandler";
 import { initMap } from "./core/map";
 import { mapMenu } from "./view/mapMenu";
 
 (async()=>{
+    if(redirect())
+        return
     window.groups=[];
     window.markers=[];
     window.Lang=determineLang();
