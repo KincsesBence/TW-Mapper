@@ -1,4 +1,5 @@
 import { Vec2d } from "./Vec2d";
+import { getTravelTime } from "./api";
 
 const fieldHeightBig=38;
 const fieldWidthBig=53;
@@ -65,7 +66,7 @@ function translating(){
     window.translateMini = new Vec2d(-stx,-sty);
 }
 
-function render(){
+export function render(){
     window.ctxBig.canvas.width =  $("#map_mover").innerWidth();
     window.ctxBig.canvas.height =  $("#map_mover").innerHeight();
     window.ctxMini.canvas.width =  $("#minimap_mover").innerWidth();
@@ -162,7 +163,6 @@ function renderRectangle(elem:marker){
         window.ctxBig.setLineDash([]);
         let from = new Vec2d(elem.points[0].x,elem.points[0].y);
         let to = from.subtr(elem.points[1]);
-        console.log(to);
         window.ctxBig.rect(elem.points[1].x*fieldWidthBig, elem.points[1].y*fieldHeightBig,(to.x+1)*fieldWidthBig, (to.y+1)*fieldHeightBig);
         window.ctxBig.stroke();
         window.ctxMini.rect(elem.points[1].x*fieldWidthMini, elem.points[1].y*fieldHeightMini,(to.x+1)*fieldWidthMini, (to.y+1)*fieldHeightMini);
@@ -175,7 +175,6 @@ function renderKontinent(elem:marker){
         window.ctxBig.beginPath();
         window.ctxMini.beginPath();
         window.ctxBig.setLineDash([]);
-        console.log(elem.points);
         let from = elem.points[0];
         let to = from.subtr(elem.points[1]);
         window.ctxBig.rect(elem.points[1].x*fieldWidthBig, elem.points[1].y*fieldHeightBig,(to.x+1)*fieldWidthBig, (to.y+1)*fieldHeightBig);
@@ -237,14 +236,24 @@ function renderTape(elem:marker){
         window.ctxBig.stroke();
         window.ctxBig.fill();
         window.ctxBig.closePath();
-
+        window.ctxMini.beginPath();
+        window.ctxMini.moveTo((elem.points[0].x+1)*fieldWidthMini-fieldWidthMini/2, (elem.points[0].y+1)*fieldHeightMini-fieldHeightMini/2);
+        window.ctxMini.lineTo((elem.points[1].x+1)*fieldWidthMini-fieldWidthMini/2, (elem.points[1].y+1)*fieldHeightMini-fieldHeightMini/2);
+        window.ctxMini.stroke();
+        window.ctxMini.closePath();
     }            
     if(elem.canClose){
-        window.ctxBig.fillStyle = 'white';
-        window.ctxBig.fillRect(elem.points[1].x*fieldWidthBig, elem.points[1].y*fieldHeightBig-24,100,26);
-        window.ctxBig.fillStyle = 'black';
-        window.ctxBig.font = "24px serif";
-        window.ctxBig.fillText(elem.length.toFixed(2), elem.points[1].x*fieldWidthBig, elem.points[1].y*fieldHeightBig);
+        window.game_data.units.forEach((unit,index)=>{
+            let time=getTravelTime(elem.length,unit)
+            window.ctxBig.fillStyle = index %2 == 0 ? '#f8f4e8':'#ded3b9';
+            window.ctxBig.fillRect((elem.points[1].x*fieldWidthBig)+time.length*8*index, elem.points[1].y*fieldHeightBig-46,time.length*8,48);
+            window.ctxBig.fillStyle = 'black';
+            window.ctxBig.font = "16px serif";
+            let img = new Image();
+            img.src = `https://dshu.innogamescdn.com/asset/708c3ff7/graphic/unit/unit_${unit}.png`;
+            window.ctxBig.drawImage(img,(elem.points[1].x*fieldWidthBig)+time.length*8*index+time.length*8/2-8,(elem.points[1].y*fieldHeightBig)-40)
+            window.ctxBig.fillText(time, (elem.points[1].x*fieldWidthBig)+time.length*8*index+3, (elem.points[1].y*fieldHeightBig-2));
+        })
     }
 }
 
@@ -266,8 +275,6 @@ function updatePos(){
 
 function drawCircle(point:Vec2d){
     let idx = window.markers.findIndex((marker:marker)=>{ return marker.id==window.activeMarker});
-    console.log(idx);
-    
     if(idx==-1){
         window.activeMarker=new Date().getTime()
         window.markers.push({
@@ -275,7 +282,7 @@ function drawCircle(point:Vec2d){
             type:"circle",
             points:[point],
             canClose:false,
-            color: window.activeGroup.color,
+            color: window.activeGroup? window.activeGroup.color:'#e66465',
             villages:[]
         })
        
@@ -283,7 +290,6 @@ function drawCircle(point:Vec2d){
         window.markers[idx].points.push(point); 
         if(window.markers[idx].points.length==2){
             let distance=window.markers[idx].points[0].getDistance(window.markers[idx].points[1]);
-            console.log(distance);
             window.activeMarker=window.markers[idx].id;
             window.markers[idx].length=distance;
             window.markers[idx].canClose = true;
@@ -304,7 +310,7 @@ function drawRectangle(point:Vec2d){
             type:"rectangle",
             points:[point],
             canClose:false,
-            color: window.activeGroup.color,
+            color: window.activeGroup? window.activeGroup.color:'#e66465',
             villages:[]
         })
        
@@ -332,7 +338,7 @@ async function drawSingle(point:Vec2d){
             type:'single',
             points:[point],
             villages: vil,
-            color: window.activeGroup.color,
+            color: window.activeGroup? window.activeGroup.color:'#e66465',
             canClose:false,
         })
         
@@ -350,7 +356,10 @@ async function drawKontinent(point:Vec2d){
     let from=new Vec2d(baseX,baseY)
     let to=from.add(new Vec2d(99,99));
     let vil = getVillagesByRectangle([to,from]);
-    let ind = window.markers.findIndex((markers)=>{return markers.villages[0].id==vil[0].id})
+    let ind = window.markers.findIndex((markers)=>{
+        if( markers.villages.length>0)
+            return markers.villages[0].id==vil[0].id
+    })
     if(ind==-1){
         window.activeMarker=new Date().getTime()
         window.markers.push({
@@ -358,7 +367,7 @@ async function drawKontinent(point:Vec2d){
             type:'kontinent',
             points:[to,from],
             villages: vil,
-            color: window.activeGroup.color,
+            color: window.activeGroup? window.activeGroup.color:'#e66465',
             canClose:true,
         })
         
@@ -378,7 +387,7 @@ async function drawConcave(point:Vec2d){
             type:"concave",
             points:[point],
             canClose:false,
-            color: window.activeGroup.color,
+            color: window.activeGroup? window.activeGroup.color:'#e66465',
             villages: []
         })
         render();
@@ -401,8 +410,6 @@ function drawTape(point:Vec2d){
     }
 
     idx = window.markers.findIndex((marker:marker)=>{ return marker.id==window.activeMarker});
-    console.log(idx);
-    
     if(idx==-1){
         window.activeMarker=new Date().getTime()
         window.markers.push({
@@ -410,7 +417,7 @@ function drawTape(point:Vec2d){
             type:"tape",
             points:[point],
             canClose:false,
-            color: window.activeGroup.color,
+            color: window.activeGroup? window.activeGroup.color:'#e66465',
             villages:[]
         })
     }else{

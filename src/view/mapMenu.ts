@@ -6,7 +6,8 @@ import { rectangle } from "../img/rectangle";
 import { single } from "../img/single";
 import { tape } from "../img/tape";
 import { getLastUpdate, update } from "../core/api";
-import { mapAction } from "../core/map";
+import { mapAction, render } from "../core/map";
+import { groupsWindow } from "./groupsWindow";
 
 export function mapMenu(){
     return /* html */`
@@ -51,7 +52,7 @@ export function mapMenu(){
             <button class="btn" onclick="mapMenu.cancelNewGroupModal()">${Lang('cancel')}</button>
         </div>
         <div class="tool-bar" id="mapControls">
-            <button class="btn">${Lang('groups')}</button>
+            <button class="btn" onclick="mapMenu.openGroups()">${Lang('groups')}</button>
             <button class="btn" onclick="mapMenu.newGroupModal()">${Lang('new_group')}</button>
             <input type="checkbox" onchange="mapMenu.toggleDrawing()" id="draw" >
             <label for="draw">${Lang('draw')}</label>
@@ -59,9 +60,9 @@ export function mapMenu(){
             <label for="vinfo" style="">${Lang('village_info')}</label>
         </div>
         <div class="tool-bar">
-            <select style="font-size:14px; width:100px" onchange="groupChanged()" id="groupSelector" placeholder="${Lang('choose_group')}"></select>
-            <button class="btn" >${Lang('add')}</button>
-            <button class="btn">${Lang('reset')}</button>
+            <select style="font-size:14px; width:100px" onchange="mapMenu.groupChanged()" id="groupSelector" placeholder="${Lang('choose_group')}"></select>
+            <button class="btn" onclick="mapMenu.addToGroup()">${Lang('add')}</button>
+            <button class="btn" onclick="mapMenu.resetMarkers()">${Lang('reset')}</button>
         </div>
         <div class="tool-bar">
             <div class="tool" onclick="mapMenu.selectTool('circle',this)">
@@ -91,6 +92,40 @@ export function mapMenu(){
 window.mapMenu = {
     isDrawing:false,
     selectedTool:'',
+    groupChanged(){
+        if($('#groupSelector').val()==""){
+            $('#tools').hide();
+            return
+        }else{
+            $('#tools').show();
+        }
+    
+        let val = parseInt($('#groupSelector').val().toString())
+    
+        let ind = window.groups.findIndex((group)=>{return group.id==val})
+        
+        window.activeGroup=window.groups[ind];
+        window.mapMenu.renderGroupSelect();
+    },
+    resetMarkers(){
+        window.markers=[];
+        render()
+    },
+    addToGroup(){
+        let activeInd=window.groups.findIndex((g)=>{return g.id==window.activeGroup.id})
+        window.markers.forEach((marker)=>{
+            marker.villages.forEach((village)=>{
+                let villInd= window.groups[activeInd].villages.findIndex((gVillage)=>{return gVillage.id==village.id})
+                if(villInd==-1){
+                    window.groups[activeInd].villages.push(village)
+                }
+            })
+        })
+    
+        window. markers=[];
+        render()
+        window.mapMenu.renderGroupSelect();
+    },
     selectTool(tool:string,elem:HTMLElement){
         $('.tool-bar .tool').removeClass('tool-selected');
         $(elem).addClass('tool-selected');
@@ -158,6 +193,10 @@ window.mapMenu = {
         }else{
             $('#map_popup').css('opacity','0');
         }
+    },
+    openGroups(){
+        window.Dialog.show("groupsModal", groupsWindow());
+        window.groupWindow.renderGroupList();
     }
 
 }

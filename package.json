@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/KincsesBence/TW-Mapper#readme",
   "devDependencies": {
+    "@types/jqueryui": "^1.12.23",
     "css-loader": "^6.8.1",
     "to-string-loader": "^1.2.0",
     "ts-loader": "^9.5.1",

@@ -1,5 +1,37 @@
 import { loadingWindow } from "../view/loadingWindow";
 import { Lang } from "./Language";
+import { xml2json } from "./xml2json";
+
+const server:string="https://"+window.location.hostname;
+const unitConfigAPI:string="/interface.php?func=get_unit_info";
+const gameConfigAPI:string="/interface.php?func=get_config";
+
+export async function getServerConfig():Promise<gameConfig>{
+    let json:gameConfig;
+    let gameConfig = localStorage.getItem('get_config');
+    if(gameConfig==null){
+        let result = await $.ajax({url: server+gameConfigAPI});
+        json = xml2json(result,"")
+        localStorage.setItem('get_config',JSON.stringify(json));
+    }else{
+        json=JSON.parse(gameConfig);
+    }
+    return  json;
+}
+
+export async function getUnitConfig():Promise<unitConfig>{
+    let json:unitConfig;
+    let unitConfig = localStorage.getItem('get_unit_info');
+    if(unitConfig==null){
+        let result = await $.ajax({url: server+unitConfigAPI});
+        json = xml2json(result,"")
+        localStorage.setItem('get_unit_info',JSON.stringify(json));
+    }else{
+        json=JSON.parse(unitConfig);
+    }
+    return json;
+}
+
 
 async function parseCSVToIndexed(data:string,tableName:string,fields:string[]){
     console.log('started '+tableName);
@@ -62,9 +94,9 @@ export async function update() {
     window.Dialog.show("launchDialog",loadingWindow());
     $('.popup_box_close').hide();
     $('.popup_box_container').append('<div style="position: fixed;width: 100%;height: 100%;top:0;left:0;z-index:12001"></div>');
-    let resVillages= await getData(`https://${window.location.host}/map/village.txt`);
-    let resPlayers = await getData(`https://${window.location.host}/map/player.txt`);
-    let resAllies = await getData(`https://${window.location.host}/map/ally.txt`);
+    let resVillages= await getData(`${server}/map/village.txt`);
+    let resPlayers = await getData(`${server}/map/player.txt`);
+    let resAllies = await getData(`${server}/map/ally.txt`);
     await parseCSVToIndexed(resVillages,'villages',['id','name','x','y','player','points','rank']);
     await wait(1000);
     await parseCSVToIndexed(resPlayers,'players',['id','name','ally','villages','points','rank']);
@@ -96,4 +128,16 @@ export function redirect(){
         return true;
     }
     return false;
+}
+
+
+export function getTravelTime(distance:number,unit:string):string{
+    let speed = window.unitConfig[unit as keyof unitConfig].speed;
+    let time = Math.round((speed * 1000 / window.gameConfig.speed / (window.gameConfig.unit_speed)) * distance);
+    let h=Math.floor(time/60000);
+    time-=h*60000;
+    let m=Math.floor(time/1000);
+    time-=m*1000;
+    let s = Math.floor(time/16.5);
+    return `${h.toString().padStart(1,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`
 }
