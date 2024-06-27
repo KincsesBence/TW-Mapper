@@ -58,4 +58,9 @@ export const en = {
     barbs:"Barbs",
     no_villages_in_group:"There are no villages in the group!",
     max_name_length:"The group name can be a maximum of 20 characters",
+    import:'Import',
+    into_group:'group',
+    import_coords:'Import coords into',
+    valid_coorsd:'Valid coords',
+    only_one:'You can only import into one group!'
 }

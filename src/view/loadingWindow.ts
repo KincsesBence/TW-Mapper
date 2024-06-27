@@ -10,7 +10,7 @@ export function loadingWindow(){
             </div>
         </div>
         <div id="mapper-loading" style="display: flex; justify-content: center; width: 100%;">
-            <img style="height:25px" src="https://dshu.innogamescdn.com/asset/6389cdba/graphic/loading.gif"><span style="padding:5px">Betöltés...</span>
+            <img style="height:25px" src="https://dshu.innogamescdn.com/asset/6389cdba/graphic/loading.gif"><span style="padding:5px">${Lang('loading')}...</span>
         </div>
     `
 }

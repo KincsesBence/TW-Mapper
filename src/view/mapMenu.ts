@@ -37,15 +37,30 @@ export function mapMenu(){
         .tool-bar label{
             margin-top:3px;
         }
+        .tool-bar select{
+            font-size:14px; width:100px
+        }
+        .color-input{
+            height:21px
+        }
+        .api-update-btn{
+            float:right;margin-top:5px;
+        }
+        .update-div{
+            float:right;
+        }
+        .update-div span{
+            float:right;
+        }
     </style>
-    <div>
-        <div style="float:right" >
-            <span id="updated" style="float:right">${Lang('api_last_update')}: ${getLastUpdate()}</span><br>
-            <button style="float:right;margin-top:5px;" class="btn" onclick="mapMenu.updateApi()">${Lang('update_api')}</button>
+    <div id="mapMenu">
+        <div class="update-div" >
+            <span id="updated">${Lang('api_last_update')}: ${getLastUpdate()}</span><br>
+            <button class="btn api-update-btn" onclick="mapMenu.updateApi()">${Lang('update_api')}</button>
         </div>
         <div class="tool-bar" style="display:none;" id="addGroup">
             <label for="color">${Lang('color')}:</label>
-            <input type="color" style="height:21px" id="color" value="#e66465" />
+            <input type="color" class="color-input" id="color" value="#e66465" />
             <label for="groupName">${Lang('name')}:</label>
             <input type="text" id="groupName" />
             <button class="btn" onclick="mapMenu.addNewGroup()">${Lang('add')}</button>
@@ -56,11 +71,11 @@ export function mapMenu(){
             <button class="btn" onclick="mapMenu.newGroupModal()">${Lang('new_group')}</button>
             <input type="checkbox" onchange="mapMenu.toggleDrawing()" id="draw" >
             <label for="draw">${Lang('draw')}</label>
-            <input type="checkbox" onchange="mapMenu.toggleInfo()" id="vinfo" >
-            <label for="vinfo" style="">${Lang('village_info')}</label>
+            <input type="checkbox" onchange="mapMenu.toggleInfo()" id="vinfo" checked>
+            <label for="vinfo">${Lang('village_info')}</label>
         </div>
         <div class="tool-bar">
-            <select style="font-size:14px; width:100px" onchange="mapMenu.groupChanged()" id="groupSelector" placeholder="${Lang('choose_group')}"></select>
+            <select onchange="mapMenu.groupChanged()" id="groupSelector" placeholder="${Lang('choose_group')}"></select>
             <button class="btn" onclick="mapMenu.addToGroup()">${Lang('add')}</button>
             <button class="btn" onclick="mapMenu.resetMarkers()">${Lang('reset')}</button>
         </div>
@@ -197,6 +212,7 @@ window.mapMenu = {
     openGroups(){
         window.Dialog.show("groupsModal", groupsWindow());
         window.groupWindow.renderGroupList();
+        window.groupWindow.renderSelectedVillages();
     }
 
 }

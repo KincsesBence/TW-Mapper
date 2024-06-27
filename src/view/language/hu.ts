@@ -56,5 +56,10 @@ export const hu = {
     no_filter_added:"Nincs egy szűrő se hozzáadva!",
     copied_to_clipboard:"A koordináták sikeresen vágólapra lettek másolva!",
     barbs:"Barbárok",
-    max_name_length:"A csoport neve max 20 karakter lehet!"
+    max_name_length:"A csoport neve max 20 karakter lehet!",
+    import:'Importálás',
+    into_group:'csoportba',
+    import_coords:'Koordináták importálása',
+    valid_coorsd:'Valid koordináták',
+    only_one:'Csak egy csoportba lehet importálni!'
 }

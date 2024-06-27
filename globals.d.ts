@@ -255,6 +255,7 @@ declare global {
   interface TWMap{
     map:map
     bonus_data:any
+    focusSubmit:()=>void
   }
   interface bonus_keydata{
     text:string
@@ -283,7 +284,8 @@ declare global {
     section:()=>void
     copyCoords:()=>void
     openFilter:()=>void
-    
+    openImportCoords:()=>void
+    goTo:(x:number,y:number)=>void
   }
 
   type filter= {
@@ -325,6 +327,14 @@ declare global {
     statement:(op:string,x:number,val:number)=>boolean
   }
 
+  interface importWindow{
+    importVillages:village[],
+    to:NodeJS.Timeout,
+    cancelImport:()=>void
+    importCoords:()=>void
+    textareaChanged:(e:Event)=>void
+  }
+
   interface Window {
     Lang:string;
     UI:UI,
@@ -334,6 +344,7 @@ declare global {
     mapMenu:mapMenu;
     groupWindow:groupWindow;
     filterWindow:filterWindow;
+    importWindow:importWindow;
     groups:group[];
     activeGroup:group;
     backupTW:(e:any) => boolean;

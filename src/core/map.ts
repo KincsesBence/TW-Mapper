@@ -321,6 +321,8 @@ function drawRectangle(point:Vec2d){
             window.activeMarker=window.markers[idx].id;
             window.markers[idx].canClose = true;
             window.markers[idx].points = window.markers[idx].points.sort((pointA,pointB)=>{return (pointA.x>=pointB.x && pointA.y>=pointB.y)? -1:1})
+            console.log(window.markers[idx].points);
+            
             window.markers[idx].villages = getVillagesByRectangle([...window.markers[idx].points])
             window.activeMarker = null;
         }

@@ -3,6 +3,87 @@ import { render } from "../core/map";
 
 export function filterWindow():string{
     return /*html */`
+    <style>
+        .filter-window{
+            height:400px;
+            width:500px;
+            position:fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+            background: transparent url(https://dshu.innogamescdn.com/asset/fd86cac8/graphic/index/contentbg.png) scroll left top repeat;
+            filter: drop-shadow(0 0 0.75rem rgb(88, 88, 88));
+            border: 2px solid #6c4824;
+            border-radius: 10px;
+            display:grid;
+            grid-template-rows: 1fr 3fr 25px; 
+            gap: 0px 0px;
+            grid-template-areas: 
+                "filter-menu"
+                "filter-items"
+                "filter-footer"; 
+            padding:5px;
+            row-gap:10px;
+            background-color:#f4e4bc;
+        }
+        .filter-menu{
+            display:grid;
+            justify-content:center;
+            grid-area: filter-menu;
+        }
+        .filter-sub{
+            margin:10px auto;
+            display:table;
+            justify-content:center;
+            grid-area: filter-sub;
+        }
+        .filter-footer{
+            display:flex;
+            justify-content:center;
+            grid-area: filter-footer;
+        }
+        .filter-items{
+            grid-area: filter-items;
+            overflow-y: scroll;
+        }
+
+        .filter-sub select{
+            max-width:150px;
+            font-size:14px;
+        }
+        .filter-sub div{
+            margin-bottom:5px;
+        }
+        .filter-sub div:first-of-type{
+            display: flex;
+            justify-content:center;
+        }
+        .filter-item{
+            padding:5px;
+            background-color: #fff5da;
+            border-top: solid 1px #ebd7af;
+            display:flex;
+            justify-content:space-between;
+        }
+        .filter-mover{
+            margin:3px 5px;
+            width: 11px; 
+            height:11px; 
+            background-image: url(https://dshu.innogamescdn.com/asset/7fe7ab60/graphic/sorthandle.png); 
+            cursor:pointer
+        }
+        .filter-footer label{
+            padding:5px
+        }
+        .filter-text{
+            width: -webkit-fill-available;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
     <div class="filter-window" style="display:none;">
         <div class="filter-menu">
             <div class="filter-main">
@@ -16,7 +97,7 @@ export function filterWindow():string{
         </div>
         <div class="filter-items"></div>
         <div class="filter-footer">
-            <input id="copyCheck" type="checkbox"/><label style="padding:5px">${Lang('carbon_copy')}</label>
+            <input id="copyCheck" type="checkbox"/><label>${Lang('carbon_copy')}</label>
             <button class="btn" onclick="filterWindow.applyFilter()">${Lang('apply')}</button>
             <button class="btn" onclick="filterWindow.cancelFilter()">${Lang('cancel')}</button>   
         </div>
@@ -30,7 +111,7 @@ window.filterWindow = {
         window.filterWindow.filters=[];
         $('.group-items').find('input[type="checkbox"]').get().forEach((elem)=>{
             if($(elem).prop('disabled')){
-                $(elem).attr("disabled", 'false');
+                $(elem).prop("disabled", false );
             }
         })
     },
@@ -118,9 +199,9 @@ window.filterWindow = {
                 </select>
             </div>
             <div>
-                <button onclick="addFilter('player','+')" class="btn">+ ${Lang('player')}</button>
-                <button onclick="addFilter('player','-')" class="btn">- ${Lang('player')}</button>
-                <button onclick="mainMenu()" class="btn">${Lang('cancel')}</button>
+                <button onclick="filterWindow.addFilter('player','+')" class="btn">+ ${Lang('player')}</button>
+                <button onclick="filterWindow.addFilter('player','-')" class="btn">- ${Lang('player')}</button>
+                <button onclick="filterWindow.mainMenu()" class="btn">${Lang('cancel')}</button>
             </div>
         `);
         $('.filter-sub').show();
@@ -138,9 +219,9 @@ window.filterWindow = {
                 </select>
             </div>
             <div>
-                <button onclick="addFilter('bonus','+')" class="btn">+ ${Lang('bonus')}</button>
-                <button onclick="addFilter('bonus','-')" class="btn">-  ${Lang('bonus')}</button>
-                <button onclick="mainMenu()" class="btn"> ${Lang('cancel')}</button>
+                <button onclick="filterWindow.addFilter('bonus','+')" class="btn">+ ${Lang('bonus')}</button>
+                <button onclick="filterWindow.addFilter('bonus','-')" class="btn">-  ${Lang('bonus')}</button>
+                <button onclick="filterWindow.mainMenu()" class="btn"> ${Lang('cancel')}</button>
             </div>
         `);
         $('.filter-sub').show();
@@ -226,11 +307,12 @@ window.filterWindow = {
                     text=`${filter.op=='-'? Lang('remove'):Lang('add')} ${Lang('if_village_points')} ${filter.val.stmt} ${filter.val.val}`;
                 break;
             }
-            html+=/*html */`<div id="fi-${index}" class="filter-item">
-            <span style="display:inline-flex"> 
-            <div style="margin:3px 5px;width: 11px; height:11px; background-image: url(https://dshu.innogamescdn.com/asset/7fe7ab60/graphic/sorthandle.png); cursor:pointer" class="qbhandle ui-sortable-handle"></div>${text}</span>
-            <img onclick="removeFilter(${index})" src="https://dshu.innogamescdn.com/asset/7fe7ab60/graphic/delete.png" class="" data-title="Törlés">
-           </div>`;
+            html+=/*html */`
+            <div id="fi-${index}" class="filter-item">
+                <div class="qbhandle ui-sortable-handle filter-mover"></div>
+                <span class="filter-text">${text}</span>
+                <img onclick="filterWindow.removeFilter(${index})" src="https://dshu.innogamescdn.com/asset/7fe7ab60/graphic/delete.png" data-title="Törlés">
+            </div>`;
         })
     
         $('.filter-items').html(html);

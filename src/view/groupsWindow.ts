@@ -1,6 +1,7 @@
 import { Lang } from "../core/Language";
 import { render } from "../core/map";
 import { filterWindow } from "./filterWindow";
+import { importWindow } from "./importWindow";
 
 export function groupsWindow():string{
     return /*html*/`
@@ -17,12 +18,12 @@ export function groupsWindow():string{
             border-radius: 10px;
         }
         #popup_box_groupsModal{
-            width: 1100px !important;
+            width: 1200px !important;
         }
         .container {
             height:500px;
             display: grid; 
-            grid-template-columns: 1fr 1.5fr; 
+            grid-template-columns: 1fr 2fr; 
             grid-template-rows: 40px calc(100% - 40px); 
             gap: 0px 0px; 
             grid-template-areas: 
@@ -52,15 +53,16 @@ export function groupsWindow():string{
         .view { grid-area: view; }
         .color { grid-area: color; }
         .checkbox { grid-area: checkbox; }
+        
         .group-items{overflow-y: scroll; height: calc(100% - 40px);}
 
         .village-row {  display: grid;
-            grid-template-columns: 3fr 1fr 1.5fr 0.5fr 50px;
+            grid-template-columns:3fr 1fr 1.5fr 0.5fr 50px 35px;
             grid-template-rows: 30px;
             gap: 0px 0px;
             grid-auto-flow: row;
             grid-template-areas:
-                "village-name point owner ally type";
+                "village-name point owner ally type goto";
         }
 
         .village-row div{
@@ -76,6 +78,7 @@ export function groupsWindow():string{
         .owner{grid-area: owner; }
         .ally{grid-area: ally; }
         .type{grid-area: type; }
+        .go-to{ grid-area: goto}
         .village-items{
             overflow-y: scroll; height: calc(100% - 40px);
         }
@@ -91,74 +94,13 @@ export function groupsWindow():string{
             background: linear-gradient(to bottom,#e2c07c 0%,#dab874 44%,#c1a264 100%);
             font-weight:bold;
         }
-        .filter-window{
-            height:400px;
-            width:500px;
-            position:fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            margin: auto;
-            background: transparent url(https://dshu.innogamescdn.com/asset/fd86cac8/graphic/index/contentbg.png) scroll left top repeat;
-            filter: drop-shadow(0 0 0.75rem rgb(88, 88, 88));
-            border: 2px solid #6c4824;
-            border-radius: 10px;
-            display:grid;
-            grid-template-rows: 1fr 3fr 25px; 
-            gap: 0px 0px;
-            grid-template-areas: 
-                "filter-menu"
-                "filter-items"
-                "filter-footer"; 
-            padding:5px;
-            row-gap:10px;
-        }
-        .filter-menu{
-            display:grid;
-            justify-content:center;
-            grid-area: filter-menu;
-        }
-        .filter-sub{
-            margin:10px auto;
-            display:table;
-            justify-content:center;
-            grid-area: filter-sub;
-        }
-        .filter-footer{
-            display:flex;
-            justify-content:center;
-            grid-area: filter-footer;
-        }
-        .filter-items{
-            grid-area: filter-items;
-            overflow-y: scroll;
-        }
-
-        .filter-sub select{
-            max-width:150px;
-            font-size:14px;
-        }
-        .filter-sub div{
-            margin-bottom:5px;
-        }
-        .filter-sub div:first-of-type{
-            display: flex;
-            justify-content:center;
-        }
-        .filter-item{
-            padding:5px;
-            background-color: #fff5da;
-            border-top: solid 1px #ebd7af;
-            display:flex;
-            justify-content:space-between;
-        }
     </style>
     <div class="container">
         <div class="menu">
             <button class="btn" onclick="groupWindow.union()">${Lang('union')}</button>
             <button class="btn" onclick="groupWindow.subtract()">${Lang('subtract')}</button>
             <button class="btn" onclick="groupWindow.section()">${Lang('section')}</button>
+            <button class="btn" onclick="groupWindow.openImportCoords()">${Lang('import')}</button>
             <button class="btn" onclick="groupWindow.openFilter()">${Lang('filter')}</button>
             <button class="btn" onclick="groupWindow.deleteSelected()">${Lang('delete')}</button>
             <span>TW-mapper - v2.0 by: toldi26</span>
@@ -180,10 +122,12 @@ export function groupsWindow():string{
                 <div class="owner">${Lang('owner')}</div>
                 <div class="ally">${Lang('ally')}</div>
                 <div class="type">${Lang('type')}</div>
+                <div class="go-to"></div>
             </div>
             <div class="village-items"></div>
+            ${filterWindow()}
+            ${importWindow()}
         </div>
-        ${filterWindow()}
     </div>
     `
 }   
@@ -196,7 +140,7 @@ window.groupWindow = {
             html+=/* html */`
                 <div class="group-row" id="g-${group.id}">
                     <div class="name">${group.name} (${group.villages.length})<a onclick="groupWindow.editGroupName(${group.id})" class="rename-icon" href="#" data-title="Átnevez"></a></div>
-                    <div class="color"><input onchange="groupWindow.changeColor(${group.id})" style="height:20px" type="color" value="${group.color}"></div>
+                    <div class="color"><input onchange="groupWindow.changeColor(${group.id})" class="color-input" type="color" value="${group.color}"></div>
                     <div class="checkbox"><input onclick="groupWindow.toggleSelected(${group.id})" type="checkbox" value="${group.id}"></div>
                     <div class="view"><button onclick="groupWindow.loadActiveGoup(${group.id})" class="btn">➜</button></div>
                 </div>
@@ -238,26 +182,26 @@ window.groupWindow = {
     renderSelectedVillages(){
         let html='';
         window.activeGroup.villages.forEach((village)=>{
-            let playerName='';
-            let AllyName='';
+            let player:player=null;
+            let ally:ally=null;
+
             let pInd=window.players.findIndex((player)=>{return player.id==village.player})
             if(pInd>-1){
-                let player=window.players[pInd];
+                player=window.players[pInd];
                 let aInd=window.allies.findIndex((ally)=>{return ally.id==player.ally})
-                playerName=player.name;
                 if(aInd>-1){
-                    let ally=window.allies[aInd];
-                    AllyName=ally.tag;
+                    ally=window.allies[aInd];
                 }
             }
            
             html+=/* html */`
             <div class="village-row">
-                <div class="village-name"> ${village.name} (${village.x}|${village.y})</div>
+                <div class="village-name"><a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_village&id=${village.id}">${village.name} (${village.x}|${village.y})</a></div>
                 <div class="point">${village.points}</div>
-                <div class="owner">${playerName}</div>
-                <div class="ally">${AllyName}</div>
+                <div class="owner">${player!=null ? `<a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_player&id=${player.id}">${player.name}</a>`:''}</div>
+                <div class="ally">${ally!=null?`<a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_ally&id=${ally.id}">${ally.tag}</a>`:''}</div>
                 <div class="type">${village.rank>0 ? /* html */`<span class="bonus_icon bonus_icon_${village.rank}" />`:''}</div>
+                <div class="go-to" onclick="groupWindow.goTo(${village.x},${village.y})"><button class="btn">🎯</button></div>
             </div>
             `
         })
@@ -392,19 +336,48 @@ window.groupWindow = {
         navigator.clipboard.writeText(window.activeGroup.villages.map((village)=>{return village.x+"|"+village.y}).join(' '));
     },
     openFilter(){
+        window.filterWindow.filters=[];
         if(window.groupWindow.selectedGroups.length==0){
             window.UI.ErrorMessage(Lang('no_group_selected'));
             return;
         }
-    
         $('.filter-window').show();
         $('.group-items').find('input[type="checkbox"]').get().forEach((elem)=>{
             if(!$(elem).prop('disabled')){
-                $(elem).attr('disabled', 'true');
+                $(elem).prop("disabled",true);
             }
         })
     
     },
+    openImportCoords(){
+        if(window.groupWindow.selectedGroups.length==0){
+            window.UI.ErrorMessage(Lang('no_group_selected'));
+            return;
+        }
+
+        if(window.groupWindow.selectedGroups.length>1){
+            window.UI.ErrorMessage(Lang('only_one'));
+            return;
+        }
+
+        let sel=window.groupWindow.selectedGroups[0];
+        let gInd=window.groups.findIndex((group)=>{return group.id==sel})
+
+        $('.import-window').show();
+        $('#importTextarea').val('');
+        $('#importGroupName').text(window.groups[gInd].name);
+        $('.group-items').find('input[type="checkbox"]').get().forEach((elem)=>{
+            if(!$(elem).prop('disabled')){
+                $(elem).prop("disabled",true);
+            }
+        })
+    },
+    goTo(x:number,y:number){
+        window.Dialog.close('groupsModal');
+        $('#mapx').val(x.toString())
+        $('#mapy').val(y.toString())
+        window.TWMap.focusSubmit();
+    }
 }
 
 

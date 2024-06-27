@@ -34,5 +34,6 @@ import { mapMenu } from "./view/mapMenu";
     window.villages = await window.DB.getAllData('villages'); 
     window.players = await window.DB.getAllData('players'); 
     window.allies = await window.DB.getAllData('allies'); 
-    $("#content_value h2").after(mapMenu());
+    if($('#mapMenu').length==0)
+        $("#content_value h2").after(mapMenu());
 })();
