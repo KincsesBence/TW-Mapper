@@ -260,6 +260,7 @@ function renderTape(elem:marker){
     }            
     if(elem.canClose){
         window.game_data.units.forEach((unit,index)=>{
+            if(unit=='militia') return;
             let time=getTravelTime(elem.length,unit)
             window.ctxBig.fillStyle = index %2 == 0 ? '#f8f4e8':'#ded3b9';
             window.ctxBig.fillRect((elem.points[1].x*fieldWidthBig)+time.length*8*index, elem.points[1].y*fieldHeightBig-46,time.length*8,48);
