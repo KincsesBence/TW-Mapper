@@ -370,7 +370,7 @@ window.groupWindow = {
 
         let sel=window.groupWindow.selectedGroups[0];
         let gInd=window.groups.findIndex((group)=>{return group.id==sel})
-
+        $('#validCoords').html('0');
         $('.import-window').show();
         $('#importTextarea').val('');
         $('#importGroupName').text(window.groups[gInd].name);
