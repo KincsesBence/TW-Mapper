@@ -103,7 +103,7 @@ export function groupsWindow():string{
             <button class="btn" onclick="groupWindow.openImportCoords()">${Lang('import')}</button>
             <button class="btn" onclick="groupWindow.openFilter()">${Lang('filter')}</button>
             <button class="btn" onclick="groupWindow.deleteSelected()">${Lang('delete')}</button>
-            <span>TW-mapper - v2.0 by: toldi26</span>
+            <span>TW-mapper - v1.2 by: toldi26</span>
             <button style="float:right;" class="btn" onclick="groupWindow.copyCoords()">${Lang('copy')}</button>
         </div>
         <div class="groups">
@@ -198,8 +198,8 @@ window.groupWindow = {
             <div class="village-row">
                 <div class="village-name"><a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_village&id=${village.id}">${village.name} (${village.x}|${village.y})</a></div>
                 <div class="point">${village.points}</div>
-                <div class="owner">${player!=null ? `<a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_player&id=${player.id}">${player.name}</a>`:''}</div>
-                <div class="ally">${ally!=null?`<a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_ally&id=${ally.id}">${ally.tag}</a>`:''}</div>
+                <div class="owner">${player!=null ? /* html */`<a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_player&id=${player.id}">${player.name}</a>`:''}</div>
+                <div class="ally">${ally!=null?  /* html */`<a target="_blank" href="/game.php?village=${window.game_data.village.id}&screen=info_ally&id=${ally.id}">${ally.tag}</a>`:''}</div>
                 <div class="type">${village.rank>0 ? /* html */`<span class="bonus_icon bonus_icon_${village.rank}" />`:''}</div>
                 <div class="go-to" onclick="groupWindow.goTo(${village.x},${village.y})"><button class="btn">🎯</button></div>
             </div>

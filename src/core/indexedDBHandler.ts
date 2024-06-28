@@ -3,6 +3,7 @@ export type store ={
     keyName:string
     AI:boolean,
     transaction?:IDBTransaction
+    isOpen?:boolean
 }
 
 export class indexedDBHandler {
@@ -51,9 +52,19 @@ export class indexedDBHandler {
         let ind = this.stores.findIndex((store:store)=>{return store.name==storeName})
         if(ind==-1) return null;
         if(!this.stores[ind].transaction){
-            this.stores[ind].transaction=this.db.transaction(storeName, "readwrite");
+            this.openTransaction(this.stores[ind],storeName);
+        }
+        if(!this.stores[ind].isOpen){
+            this.openTransaction(this.stores[ind],storeName);
         }
         return this.stores[ind].transaction;
+    }
+    openTransaction(ref:store,storeName:string){
+        ref.transaction=this.db.transaction(storeName, "readwrite");
+        ref.isOpen=true
+        ref.transaction.oncomplete=()=>{
+            ref.isOpen=false;
+        }
     }
 
     async getAllData(storeName:string):Promise<any[]>{
