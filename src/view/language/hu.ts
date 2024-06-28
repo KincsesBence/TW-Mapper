@@ -44,6 +44,8 @@ export const hu = {
     apply:"Alkalmaz",
     rename:"Átnevez",
     no_group_selected:"Nincs egy csoport se kiválasztva!",
+    no_group:"Nincs egy csoport se létrehozva!",
+    empty_group:"Nincs egy csoportban egy falu sem!",
     not_enough_group_selected:"Nincs elegendő csoport kiválasztva",
     only_barbs:"Csak bónusz",
     not_bonus:"Nem bónusz",

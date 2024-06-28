@@ -332,6 +332,14 @@ window.groupWindow = {
         render();
     },
     copyCoords(){
+        if(!window.activeGroup){
+            window.UI.ErrorMessage(Lang('no_group_selected'))
+            return;
+        }
+        if(window.activeGroup.villages.length==0){
+            window.UI.ErrorMessage(Lang('empty_group'))
+            return;
+        }
         window.UI.SuccessMessage(Lang('copied_to_clipboard'))
         navigator.clipboard.writeText(window.activeGroup.villages.map((village)=>{return village.x+"|"+village.y}).join(' '));
     },

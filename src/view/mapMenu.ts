@@ -127,6 +127,11 @@ window.mapMenu = {
         render()
     },
     addToGroup(){
+        if(window.groups.length==0){
+            window.UI.ErrorMessage(Lang('no_group'))
+            return;
+        }
+        
         let activeInd=window.groups.findIndex((g)=>{return g.id==window.activeGroup.id})
         window.markers.forEach((marker)=>{
             marker.villages.forEach((village)=>{

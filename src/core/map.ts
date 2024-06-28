@@ -128,12 +128,14 @@ export function render(){
 function renderConcave(elem:marker){
     window.ctxBig.beginPath();
     if(elem.points.length>0){
-        window.ctxBig.ellipse((elem.points[0].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[0].y+1)*fieldHeightBig-fieldHeightBig/2, (fieldWidthBig/2)*0.5, (fieldHeightBig/2)*0.5, 0, 0, 2 * Math.PI);
+        window.ctxBig.ellipse((elem.points[0].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[0].y+1)*fieldHeightBig-fieldHeightBig/2, (fieldWidthBig/2)*0.6, (fieldHeightBig/2)*0.6, 0, 0, 2 * Math.PI);
         window.ctxBig.fill();
     }
     
     for (let i = 0; i < elem.points.length-1; i++) {
         renderLines(elem.points[i],elem.points[i+1])
+        window.ctxBig.ellipse((elem.points[i+1].x+1)*fieldWidthBig-fieldWidthBig/2, (elem.points[i+1].y+1)*fieldHeightBig-fieldHeightBig/2, (fieldWidthBig/2)*0.25, (fieldHeightBig/2)*0.25, 0, 0, 2 * Math.PI);
+        window.ctxMini.fill();
     }
     if(elem.canClose){
         renderLines(elem.points[0],elem.points[elem.points.length-1])
@@ -274,9 +276,9 @@ function renderTape(elem:marker){
 function renderLines(point:Vec2d,point2:Vec2d){
     window.ctxBig.moveTo((point.x+1)*fieldWidthBig-fieldWidthBig/2, (point.y+1)*fieldHeightBig-fieldHeightBig/2);
     window.ctxBig.lineTo((point2.x+1)*fieldWidthBig-fieldWidthBig/2, (point2.y+1)*fieldHeightBig-fieldHeightBig/2);
-
     window.ctxMini.moveTo((point.x+1)*fieldWidthMini-fieldWidthMini/2, (point.y+1)*fieldHeightMini-fieldHeightMini/2);
     window.ctxMini.lineTo((point2.x+1)*fieldWidthMini-fieldWidthMini/2, (point2.y+1)*fieldHeightMini-fieldHeightMini/2);
+    
 }
 
 function updatePos(){
@@ -363,7 +365,6 @@ async function drawSingle(point:Vec2d){
 }
 
 async function drawKontinent(point:Vec2d){
-
     let baseX=Math.floor(point.x/100)*100;
     let baseY=Math.floor(point.y/100)*100;
     let from=new Vec2d(baseX,baseY)
@@ -405,9 +406,12 @@ async function drawConcave(point:Vec2d){
         })
         render();
     }else{
-        if(window.markers[idx].points[0].equal(point)){
+        if(window.markers[idx].points[window.markers[idx].points.length-1].equal(point)){
+            window.markers[idx].points.splice(window.markers[idx].points.length-1,1)
+        }else if(window.markers[idx].points[0].equal(point)){
             window.activeMarker=window.markers[idx].id;
             window.markers[idx].canClose=true;
+            window.activeMarker = null
             window.markers[idx].villages = getVillagesByConcave(window.markers[idx].points)
         }else{
             window.markers[idx].points.push(point); 
@@ -451,31 +455,46 @@ function drawTape(point:Vec2d){
 function getVillagesByRectangle(points:Vec2d[]):village[]{
     let villages = window.villages;
     let villagesOpt:village[]=[];
-    let from = points[0];
-    let to = points[1].subtr(from);
-    
+
+    if(points.length!=2){
+        return [];
+    }
+
+    let vertices:Vec2d[]=[
+        points[0],
+        new Vec2d(points[0].x,points[1].y),
+        points[1],
+        new Vec2d(points[1].x,points[0].y)
+    ];
+
+    let xAxis=new Vec2d(1,0);
+    let yAxis=new Vec2d(0,1);
+
+    let [xMax,xMin] = projectTo(xAxis,vertices);
+    let [yMax,yMin]= projectTo(yAxis,vertices);
+   
 
     villages.forEach((village)=>{
-        if(village.x>=points[1].x && village.x<=points[0].x && village.y>=points[1].y && village.y<=points[0].y){
-           
-        }
-        let isIn=false;
-        if(to.x<0 && to.y<0){
-            points[0].x<village.x && points[0].y<village.y && points[1].x>village.x && points[1].y>village.y
-        }else if(to.x>=0 && to.y>=0){
-            
-        }else if(to.x<0 && to.y>=0){
-        
-        }else if(to.x>=0 && to.y<0){
-            
-        }
+        let [xPmax,xPmin] = projectTo(xAxis,[new Vec2d(village.x,village.y)]);
+        let [yPmax,yPmin] = projectTo(yAxis,[new Vec2d(village.x,village.y)]);
 
-        if(isIn){
-            villagesOpt.push(village);
+        if(xPmax<=xMax && xPmin>=xMin && yPmax<=yMax && yPmin>=yMin){
+            villagesOpt.push(village)
         }
-    
     })
+
     return villagesOpt;
+}
+
+function projectTo(to:Vec2d,obj:Vec2d[]){
+    let results=[];
+    for (let i = 0; i < obj.length; i++) {
+        results.push(to.dotProduct(obj[i]));
+    }
+
+    let max= Math.max(...results);
+    let min= Math.min(...results);
+    return [max,min];
 }
 
 function getVillagesByConcave(points:Vec2d[]):village[]{

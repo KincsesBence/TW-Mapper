@@ -44,6 +44,8 @@ export const en = {
     apply:"Apply",
     rename:"Rename",
     no_group_selected:"No group is selected!",
+    no_group:"No group has been created!",
+    empty_group:"The selected group is empty!",
     not_enough_group_selected:"Not enough groups selected",
     only_barbs:"Bonus Only",
     not_bonus:"Not bonus",
@@ -63,4 +65,5 @@ export const en = {
     import_coords:'Import coords into',
     valid_coorsd:'Valid coords',
     only_one:'You can only import into one group!'
+    
 }

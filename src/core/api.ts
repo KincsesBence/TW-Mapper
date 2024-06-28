@@ -73,7 +73,7 @@ function decodeLine(line:string,fields:string[]){
 
 export function getLastUpdate(){
     let lastUpdate= new Date(parseInt(localStorage.getItem('TW_API_LAST_UPDATE'))-(60*60*24*1000));
-    return lastUpdate.toLocaleString('hu-HU');
+    return lastUpdate.toLocaleString(`${window.Lang}-${window.Lang.toUpperCase()}`);
 }
 
 function getData(ajaxurl:string) { 
