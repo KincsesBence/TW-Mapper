@@ -158,14 +158,28 @@ function renderRectangle(elem:marker){
         window.ctxBig.closePath();
     }
     if(elem.canClose){
+
         window.ctxBig.beginPath();
         window.ctxMini.beginPath();
         window.ctxBig.setLineDash([]);
-        let from = new Vec2d(elem.points[0].x,elem.points[0].y);
-        let to = from.subtr(elem.points[1]);
-        window.ctxBig.rect(elem.points[1].x*fieldWidthBig, elem.points[1].y*fieldHeightBig,(to.x+1)*fieldWidthBig, (to.y+1)*fieldHeightBig);
+        let from = elem.points[0];
+        let to = elem.points[1].subtr(from);
+        if(to.x<0 && to.y<0){
+            from = from.add(new Vec2d(1,1));
+            to = to.subtr(new Vec2d(1,1));
+        }else if(to.x>=0 && to.y>=0){
+            to = to.add(new Vec2d(1,1));
+        }else if(to.x<0 && to.y>=0){
+            from = from.add(new Vec2d(1,0));
+            to = to.subtr(new Vec2d(1,-1));
+        }else if(to.x>=0 && to.y<0){
+            from = from.add(new Vec2d(0,1));
+            to = to.subtr(new Vec2d(-1,1));
+        }
+        
+        window.ctxBig.rect(from.x*fieldWidthBig, from.y*fieldHeightBig,(to.x)*fieldWidthBig, (to.y)*fieldHeightBig);
         window.ctxBig.stroke();
-        window.ctxMini.rect(elem.points[1].x*fieldWidthMini, elem.points[1].y*fieldHeightMini,(to.x+1)*fieldWidthMini, (to.y+1)*fieldHeightMini);
+        window.ctxMini.rect(from.x*fieldWidthMini,from.y*fieldHeightMini,(to.x)*fieldWidthMini, (to.y)*fieldHeightMini);
         window.ctxMini.stroke();
         window.ctxBig.closePath();
         window.ctxMini.closePath();
@@ -319,10 +333,7 @@ function drawRectangle(point:Vec2d){
 
         if(window.markers[idx].points.length==2){
             window.activeMarker=window.markers[idx].id;
-            window.markers[idx].canClose = true;
-            window.markers[idx].points = window.markers[idx].points.sort((pointA,pointB)=>{return (pointA.x>=pointB.x && pointA.y>=pointB.y)? -1:1})
-            console.log(window.markers[idx].points);
-            
+            window.markers[idx].canClose = true; 
             window.markers[idx].villages = getVillagesByRectangle([...window.markers[idx].points])
             window.activeMarker = null;
         }
@@ -440,10 +451,29 @@ function drawTape(point:Vec2d){
 function getVillagesByRectangle(points:Vec2d[]):village[]{
     let villages = window.villages;
     let villagesOpt:village[]=[];
+    let from = points[0];
+    let to = points[1].subtr(from);
+    
+
     villages.forEach((village)=>{
         if(village.x>=points[1].x && village.x<=points[0].x && village.y>=points[1].y && village.y<=points[0].y){
+           
+        }
+        let isIn=false;
+        if(to.x<0 && to.y<0){
+            points[0].x<village.x && points[0].y<village.y && points[1].x>village.x && points[1].y>village.y
+        }else if(to.x>=0 && to.y>=0){
+            
+        }else if(to.x<0 && to.y>=0){
+        
+        }else if(to.x>=0 && to.y<0){
+            
+        }
+
+        if(isIn){
             villagesOpt.push(village);
         }
+    
     })
     return villagesOpt;
 }

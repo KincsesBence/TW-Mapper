@@ -102,6 +102,7 @@ export class Vec2d{
         return new Vec2d(this.x*n, this.y*n);
     }
     
+    
     /**
      * Normal vector of the contexts vector
      *
