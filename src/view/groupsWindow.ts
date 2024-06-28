@@ -141,7 +141,7 @@ window.groupWindow = {
                 <div class="group-row" id="g-${group.id}">
                     <div class="name">${group.name} (${group.villages.length})<a onclick="groupWindow.editGroupName(${group.id})" class="rename-icon" href="#" data-title="Átnevez"></a></div>
                     <div class="color"><input onchange="groupWindow.changeColor(${group.id})" class="color-input" type="color" value="${group.color}"></div>
-                    <div class="checkbox"><input onclick="groupWindow.toggleSelected(${group.id})" type="checkbox" value="${group.id}"></div>
+                    <div class="checkbox"><input onclick="groupWindow.toggleSelected(${group.id})" type="checkbox" value="${group.id}" ${window.groupWindow.selectedGroups.includes(group.id)? `checked`:``}></div>
                     <div class="view"><button onclick="groupWindow.loadActiveGoup(${group.id})" class="btn">➜</button></div>
                 </div>
             `
