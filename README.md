@@ -7,38 +7,56 @@ Tw-mapper is an in-game map village selector and filter. To run the script, copy
 ```javascript
 javascript:$.getScript("https://media.innogamescdn.com/com_DS_HU/scripts/twmapper.js");void(0);
 ```
-## User manual:
+# User manual:
 
-# 1. Data Storage
+![main menu](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/main.png)
+
+
+## 1. Data Storage
 
 By offical Inno Games API documentation, scripts or any API fetchers should minimize the amount of API calls. Cause of this rule, this script has to store the wolrd data locally.
 In some cases villages data exceeds the max amount of space that a single website can possibly store (5MB) in local storage. As a consequence of the previous rules, I had to choose the mix of indexedDB and localstorge. The TW API data is stored in IndexedDB inside 3 different table (villages, players, allies). The srcipt fetches the API after 24h has passed from the previuos update.
 The timestamp of the latest update is stored in the localstorage under name "TW_API_LAST_UPDATE". The UI displays this information on the top rigth corner. Under the displayed date, you have the option to manually fetch the latest world data, but I suggest to use this as little as possible. 
 
-# 2. Drawing
+![update button](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/update.png)
+
+## 2. Drawing
+
+![main menu](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/toolbar.png)
 
 To draw, first you have to enable the "Drawing" chekbox. After that, you have to chose one of the drawing tool, and by holding down the SHIFT button and CLCIKING on any field on the main map, you can start the selection.
 
 Tools:
 - Circle tool: To use this one, first click to the wanted center of the circle, and for the second click select the radius of the circle.
-- Concave shape seletion tool: For this one you have to click step by step the desired shape. You can finish the shape by connecting back to the origin point. If u click again on the latest selection, you can withdraw the point.
+![Circle tool](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/circle.png)
+- Concave shape seletion tool: For this one you have to click step by step the desired shape. You can finish the shape by connecting back to the origin point. If u click again on the latest
+selection, you can withdraw the point.
+![Concave tool](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/concave.png)
 - Rectangle tool: You have to define the diagonal of the rectangle with two click.
+![Rectangle tool](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/rectangle.png)
 - Single select tool: With this one you can select and unselect villages one by one from the map.
-- Kontinet tool: You can select and unselect the whole continent that you've clicked on the map.
+![Single select tool](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/single.png)
+- Kontinent tool: You can select and unselect the whole continent that you've clicked on the map.
+![Kontinent tool](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/continent.png)
 - Ruler: By click on two point's on the map you can measure the travel time.
+![Ruler](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/ruler.png)
 
 You can reset all selection by clicking on the "reset" button, and you can add the selection to a group, by clicking the "add" button
 
-# 3. Creating groups
+## 3. Creating groups
 
 Groups are the main feature of this script. You can apply many functions on the groups to filter down the required coordinates.
 
 You can create a group by clicking on the "New group" button. By doing this you can give the name and the color of the group.
 To finalize, click the "add" button, to cancel, click the "cancel" button.   
 
+![create a group](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/new%20group.png)
+
 After adding the group, it shows up in the group list, where you can select the active group. When adding a village selection, it always appends them into the selected group, and by doing this it displays the numeber of members near the name of the group. 
 
-# 4. Groups menu
+## 4. Groups menu
+
+![Groups menu](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/groups.png)
 
 To open the groups modal you have to click the "Groups" button.
 
@@ -56,10 +74,12 @@ On the toolbar of the modal there are multiple options that you able to apply on
 - Filter: you can apply a fileter to the selected groups. You have to check at least 1 group. (features in a different section).
 - Delete: you can delete a selected group. You have to check at least 1 group.
 
-# 5. Filters
+## 5. Filters
 
 Filters are one of the most important feature of this script. You can fileter down villages by multiple parameters.
 To open the filter modal you have to select at least one group. At the end it applies the filter one by one on each selected group(s).
+
+![Filters menu](https://github.com/KincsesBence/TW-Mapper/blob/main/screenshots/filters.png)
 
 You can decide if you want to apply a negative or positive filter. 
 Negative filter means that it removes the filter type from the base village list.
