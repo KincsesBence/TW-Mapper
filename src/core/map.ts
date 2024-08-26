@@ -5,6 +5,27 @@ const fieldHeightBig=38;
 const fieldWidthBig=53;
 const fieldHeightMini=5;
 const fieldWidthMini=5;
+const images={
+    archer:new Image(),
+    axe:new Image(),
+    catapult:new Image(),
+    heavy:new Image(),
+    knight:new Image(),
+    light:new Image(),
+    marcher:new Image(),
+    ram:new Image(),
+    snob:new Image(),
+    spear:new Image(),
+    spy:new Image(),
+    sword:new Image(),
+}
+loadAssets();
+
+function loadAssets():any{
+    Object.keys(images).forEach((key)=>{
+        images[key as keyof unitConfig].src = `https://dshu.innogamescdn.com/asset/708c3ff7/graphic/unit/unit_${key}.png`;
+    });
+}
 
 export const mapAction = function (e:any) {
     var pos = this.coordByEvent(e);
@@ -263,13 +284,11 @@ function renderTape(elem:marker){
             if(unit=='militia') return;
             let time=getTravelTime(elem.length,unit)
             window.ctxBig.fillStyle = index %2 == 0 ? '#f8f4e8':'#ded3b9';
-            window.ctxBig.fillRect((elem.points[1].x*fieldWidthBig)+time.length*8*index, elem.points[1].y*fieldHeightBig-46,time.length*8,48);
+            window.ctxBig.fillRect((elem.points[1].x*fieldWidthBig)+time.length*7*index, elem.points[1].y*fieldHeightBig-46,time.length*7,48);
             window.ctxBig.fillStyle = 'black';
-            window.ctxBig.font = "16px serif";
-            let img = new Image();
-            img.src = `https://dshu.innogamescdn.com/asset/708c3ff7/graphic/unit/unit_${unit}.png`;
-            window.ctxBig.drawImage(img,(elem.points[1].x*fieldWidthBig)+time.length*8*index+time.length*8/2-8,(elem.points[1].y*fieldHeightBig)-40)
-            window.ctxBig.fillText(time, (elem.points[1].x*fieldWidthBig)+time.length*8*index+3, (elem.points[1].y*fieldHeightBig-2));
+            window.ctxBig.font = "14px serif";
+            window.ctxBig.fillText(time, (elem.points[1].x*fieldWidthBig)+time.length*7*index+3, (elem.points[1].y*fieldHeightBig-2));
+            window.ctxBig.drawImage(images[unit as keyof unitConfig],(elem.points[1].x*fieldWidthBig)+time.length*7*index+time.length*7/2-7,(elem.points[1].y*fieldHeightBig)-40)
         })
     }
 }

@@ -140,15 +140,12 @@ export function redirect(){
 
 
 export function getTravelTime(distance:number,unit:string):string{
-    let baseUnitSpeed = window.unitConfig[unit as keyof unitConfig].speed;
-    let travel = Math.round(distance * ((baseUnitSpeed*1000) / window.gameConfig.speed / window.gameConfig.unit_speed ));
-    let h = Math.floor(travel / 1000 / 60 / 60);
-    travel = travel - (h * 60 * 60 * 1000);
-    let m = Math.floor(travel / 1000 / 60);
-    travel = travel - (m * 60 * 1000);
-    let s = Math.floor(travel / 1000);
-    travel = travel - (s * 1000);
-    let ms = travel;
-    return `${h.toString().padStart(1,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`
-
+    let UnitSpeedInMinutes = window.unitConfig[unit as keyof unitConfig].speed;
+    let seconds = Math.round(distance * (UnitSpeedInMinutes*60));
+    let h = Math.floor(seconds/3600);
+    seconds = seconds - (h * 3600 );
+    let m = Math.floor(seconds / 60);
+    seconds = seconds - (m * 60 );
+    let s = Math.floor(seconds);
+    return `${h.toString().padStart(1,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }

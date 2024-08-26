@@ -83,7 +83,7 @@ window.importWindow ={
         clearTimeout(window.importWindow.to);
         window.importWindow.to = setTimeout(()=>{
             window.importWindow.importVillages=[];
-            $('#validCoords').html(`<img style="height:15px" src="https://dshu.innogamescdn.com/asset/6389cdba/graphic/loading.gif"><span style="padding:5px">Betöltés...</span>`)
+            $('#validCoords').html(`<img style="height:15px" src="https://dshu.innogamescdn.com/asset/6389cdba/graphic/loading.gif"><span style="padding:5px">${Lang('loading')}...</span>`)
             let coordsInput=$('#importTextarea').val().toString();
             $('#importTextarea').prop('disabled',true);
             $('#applyBtn').prop('disabled',true);

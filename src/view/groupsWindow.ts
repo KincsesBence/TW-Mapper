@@ -103,7 +103,7 @@ export function groupsWindow():string{
             <button class="btn" onclick="groupWindow.openImportCoords()">${Lang('import')}</button>
             <button class="btn" onclick="groupWindow.openFilter()">${Lang('filter')}</button>
             <button class="btn" onclick="groupWindow.deleteSelected()">${Lang('delete')}</button>
-            <span>TW-mapper - v1.2 by: toldi26</span>
+            <span>TW-mapper - v1.2.1 by: toldi26</span>
             <button style="float:right;" class="btn" onclick="groupWindow.copyCoords()">${Lang('copy')}</button>
         </div>
         <div class="groups">
