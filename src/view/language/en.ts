@@ -64,6 +64,6 @@ export const en = {
     into_group:'group',
     import_coords:'Import coords into',
     valid_coorsd:'Valid coords',
-    only_one:'You can only import into one group!'
-    
+    only_one:'You can only import into one group!',
+    one_update_per_hour:'You can only perform 1 update per hour!'
 }

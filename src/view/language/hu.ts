@@ -63,5 +63,6 @@ export const hu = {
     into_group:'csoportba',
     import_coords:'Koordináták importálása',
     valid_coorsd:'Valid koordináták',
-    only_one:'Csak egy csoportba lehet importálni!'
+    only_one:'Csak egy csoportba lehet importálni!',
+    one_update_per_hour:'Óránkánt csak 1 frissítést hajthatsz végre!'
 }

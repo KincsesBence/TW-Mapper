@@ -72,7 +72,7 @@ function decodeLine(line:string,fields:string[]){
 }
 
 export function getLastUpdate(){
-    let lastUpdate= new Date(parseInt(localStorage.getItem('TW_API_LAST_UPDATE'))-(60*60*24*1000));
+    let lastUpdate= new Date(parseInt(localStorage.getItem('TW_API_LAST_UPDATE')));
     return lastUpdate.toLocaleString(`${window.Lang}-${window.Lang.toUpperCase()}`);
 }
 
@@ -84,12 +84,20 @@ function getData(ajaxurl:string) {
 };
 
 export async function updateWorldData(){
-    let lastUpdate= parseInt(localStorage.getItem('TW_API_LAST_UPDATE'));
-    if(lastUpdate>new Date().getTime()) return;
+    let lastUpdate = parseInt(localStorage.getItem('TW_API_LAST_UPDATE'));
+    if(lastUpdate+(3600*24*1000)>new Date().getTime()) return;
     await update()
 }
 
 export async function update() {
+    let lastUpdate = parseInt(localStorage.getItem('TW_API_LAST_UPDATE'));
+    let nextHour = lastUpdate+(3600*1000);
+
+    if(nextHour>new Date().getTime()){
+        window.UI.ErrorMessage(Lang('one_update_per_hour'))
+        return;
+    }
+    
     console.log('Updating...');
     window.Dialog.show("launchDialog",loadingWindow());
     $('.popup_box_close').hide();
@@ -103,8 +111,8 @@ export async function update() {
     await wait(1000);
     await parseCSVToIndexed(resAllies,'allies',['id','name','tag','members','villages','points','all_points','rank']);
     await wait(1000);
-    localStorage.setItem('TW_API_LAST_UPDATE',new Date(new Date().setDate(new Date().getDate() + 1)).getTime().toString());
-    $('html').find('#mapper-loading span').text(Lang('api_updated') );
+    localStorage.setItem('TW_API_LAST_UPDATE',new Date().getTime().toString());
+    $('html').find('#mapper-loading span').text(Lang('api_updated'));
     await wait(2000);
     window.Dialog.close("launchDialog");
     console.log('Update finished');
@@ -132,12 +140,15 @@ export function redirect(){
 
 
 export function getTravelTime(distance:number,unit:string):string{
-    let speed = window.unitConfig[unit as keyof unitConfig].speed;
-    let time = Math.round((speed * 1000 / window.gameConfig.speed / (window.gameConfig.unit_speed)) * distance);
-    let h=Math.floor(time/60000);
-    time-=h*60000;
-    let m=Math.floor(time/1000);
-    time-=m*1000;
-    let s = Math.floor(time/16.5);
+    let baseUnitSpeed = window.unitConfig[unit as keyof unitConfig].speed;
+    let travel = Math.round(distance * ((baseUnitSpeed*1000) / window.gameConfig.speed / window.gameConfig.unit_speed ));
+    let h = Math.floor(travel / 1000 / 60 / 60);
+    travel = travel - (h * 60 * 60 * 1000);
+    let m = Math.floor(travel / 1000 / 60);
+    travel = travel - (m * 60 * 1000);
+    let s = Math.floor(travel / 1000);
+    travel = travel - (s * 1000);
+    let ms = travel;
     return `${h.toString().padStart(1,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`
+
 }

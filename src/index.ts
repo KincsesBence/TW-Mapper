@@ -9,7 +9,7 @@ import { mapMenu } from "./view/mapMenu";
         return
     window.groups=[];
     window.markers=[];
-    window.Lang=determineLang();
+    window.Lang = determineLang();
     window.gameConfig = await getServerConfig();
     window.unitConfig = await getUnitConfig();
     initMap();
