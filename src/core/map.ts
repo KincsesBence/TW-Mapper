@@ -280,17 +280,54 @@ function renderTape(elem:marker){
         window.ctxMini.closePath();
     }            
     if(elem.canClose){
-        window.game_data.units.forEach((unit,index)=>{
+        let index=0;
+        let cartX=(elem.points[1].x+1)*fieldWidthBig;
+        let cartY=(elem.points[1].y+1)*fieldHeightBig;
+        let {x,y} = drawBox(
+            cartX,
+            cartY,
+            index %2 == 0 ? '#f8f4e8':'#ded3b9',
+            elem.length.toFixed(1),
+            14,
+            null
+        )
+
+        cartX=x;
+        cartY=y;
+
+        window.game_data.units.forEach((unit)=>{
             if(unit=='militia') return;
+            index++;
             let time=getTravelTime(elem.length,unit)
-            window.ctxBig.fillStyle = index %2 == 0 ? '#f8f4e8':'#ded3b9';
-            window.ctxBig.fillRect((elem.points[1].x*fieldWidthBig)+time.length*7*index, elem.points[1].y*fieldHeightBig-46,time.length*7,48);
-            window.ctxBig.fillStyle = 'black';
-            window.ctxBig.font = "14px serif";
-            window.ctxBig.fillText(time, (elem.points[1].x*fieldWidthBig)+time.length*7*index+3, (elem.points[1].y*fieldHeightBig-2));
-            window.ctxBig.drawImage(images[unit as keyof unitConfig],(elem.points[1].x*fieldWidthBig)+time.length*7*index+time.length*7/2-7,(elem.points[1].y*fieldHeightBig)-40)
+            let {x,y} = drawBox(
+                cartX,
+                cartY,
+                index %2 == 0 ? '#f8f4e8':'#ded3b9',
+                time,
+                14,
+                unit
+            )
+            cartX=x;
+            cartY=y;
         })
     }
+}
+
+function drawBox(x:number,y:number,bgColor:string,text:string,fontSize:number,image: string | null = null){
+    window.ctxBig.fillStyle = bgColor;
+    let padding=(fontSize/2);
+    let width=text.length*padding+padding
+    
+    window.ctxBig.fillRect(x,y,width,fieldHeightBig);
+    window.ctxBig.fillStyle = 'black';
+    window.ctxBig.fillStyle = 'black';
+    window.ctxBig.font = "14px serif";
+    window.ctxBig.fillText(text,x+padding,y+fieldHeightBig-padding/2);
+    if(image!==null){
+        window.ctxBig.drawImage(images[image as keyof unitConfig],x+width/2-9,y+padding/2)
+    }
+
+    return {x:(x+width),y}
 }
 
 function renderLines(point:Vec2d,point2:Vec2d){
